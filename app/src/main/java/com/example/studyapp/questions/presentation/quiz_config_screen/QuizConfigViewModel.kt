@@ -51,6 +51,14 @@ class QuizConfigViewModel(
 
     fun onIntent(intent: QuizConfigIntent) {
         when (intent) {
+            is QuizConfigIntent.Initialize -> {
+                val flow = try {
+                    SubjectFlow.valueOf(intent.flowType)
+                } catch (e: Exception) {
+                    SubjectFlow.TEST
+                }
+                _state.update { it.copy(flowType = flow) }
+            }
             is QuizConfigIntent.OnTopicSelect -> {
                 val newCount = _state.value.questionCount.coerceAtMost(_state.value.topics[intent.index].second)
                 _state.update { 

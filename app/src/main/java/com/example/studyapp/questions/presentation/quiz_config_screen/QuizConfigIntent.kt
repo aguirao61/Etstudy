@@ -1,6 +1,7 @@
 package com.example.studyapp.questions.presentation.quiz_config_screen
 
 sealed class QuizConfigIntent {
+    data class Initialize(val flowType: String) : QuizConfigIntent()
     data class OnTopicSelect(val index: Int) : QuizConfigIntent()
     data class OnQuestionCountChange(val count: Int) : QuizConfigIntent()
     data class OnRandomOrderToggle(val isRandom: Boolean) : QuizConfigIntent()

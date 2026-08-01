@@ -54,6 +54,14 @@ class SubjectsViewModel(
 
     fun onIntent(intent: SubjectsIntent) {
         when (intent) {
+            is SubjectsIntent.Initialize -> {
+                val flow = try {
+                    SubjectFlow.valueOf(intent.flowType)
+                } catch (e: Exception) {
+                    SubjectFlow.BROWSE
+                }
+                _state.update { it.copy(flowType = flow) }
+            }
             is SubjectsIntent.OnSearchQueryChange -> {
                 _state.update { it.copy(searchQuery = intent.query) }
                 applyFilters()
@@ -68,11 +76,11 @@ class SubjectsViewModel(
                 if (_state.value.flowType == SubjectFlow.BROWSE) {
                     sendEffect(SubjectsEffect.ShowToast("Asignatura: ${intent.subject.name}"))
                 } else {
-                    sendEffect(SubjectsEffect.NavigateToQuizConfig(intent.subject, _state.value.flowType))
+                    sendEffect(SubjectsEffect.NavigateToQuizConfig(intent.subject))
                 }
             }
             SubjectsIntent.OnProfileClick -> {
-                sendEffect(SubjectsEffect.ShowToast("Perfil pulsado"))
+                sendEffect(SubjectsEffect.NavigateToProfile)
             }
             SubjectsIntent.OnBackClick -> {
                 sendEffect(SubjectsEffect.NavigateBack)

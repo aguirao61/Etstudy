@@ -26,22 +26,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.studyapp.core.presentation.ui.theme.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyapp.questions.domain.SubjectFlow
 
-// --- PALETA DE COLORES DE LA APP ---
-private val LightBg = Color(0xFFF8FAFC)
-private val CardBg = Color(0xFFFFFFFF)
-private val CardBorder = Color(0xFFE2E8F0)
-private val PrimaryBlue = Color(0xFF3B82F6)
-private val PrimaryBlueLight = Color(0xFFEFF6FF)
-private val TextMain = Color(0xFF0F172A)
-private val TextSub = Color(0xFF64748B)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QuizConfigScreen(
+    flowType: String,
     viewModel: QuizConfigViewModel = viewModel(),
     onBackClick: () -> Unit = {},
     onStartTest: (subjectId: Int, topicIndex: Int, questionsCount: Int, isRandom: Boolean, isTimerEnabled: Boolean, immediateCorrection: Boolean) -> Unit = { _, _, _, _, _, _ -> }
@@ -50,6 +43,10 @@ fun QuizConfigScreen(
     
     val currentOnBackClick by rememberUpdatedState(onBackClick)
     val currentOnStartTest by rememberUpdatedState(onStartTest)
+
+    LaunchedEffect(flowType) {
+        viewModel.onIntent(QuizConfigIntent.Initialize(flowType))
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -91,7 +88,7 @@ fun QuizConfigScreenContent(
                         text = "Configuración",
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
-                        color = TextMain
+                        color = StudyTheme.textMain
                     )
                 },
                 navigationIcon = {
@@ -99,14 +96,14 @@ fun QuizConfigScreenContent(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Volver",
-                            tint = TextMain
+                            tint = StudyTheme.textMain
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = LightBg)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = StudyTheme.surfaceBg)
             )
         },
-        containerColor = LightBg
+        containerColor = StudyTheme.surfaceBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -135,12 +132,12 @@ fun QuizConfigScreenContent(
                     text = state.subjectName,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextMain
+                    color = StudyTheme.textMain
                 )
                 Text(
                     text = "${state.totalQuestionsAvailable} preguntas disponibles",
                     fontSize = 13.sp,
-                    color = TextSub
+                    color = StudyTheme.textSub
                 )
             }
 
@@ -156,10 +153,10 @@ fun QuizConfigScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) PrimaryBlueLight else LightBg)
+                                .background(if (isSelected) PrimaryBlueLight else StudyTheme.surfaceBg)
                                 .border(
                                     width = 1.dp,
-                                    color = if (isSelected) PrimaryBlue else CardBorder,
+                                    color = if (isSelected) PrimaryBlue else StudyTheme.cardBorder,
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .clickable { onIntent(QuizConfigIntent.OnTopicSelect(index)) }
@@ -171,7 +168,7 @@ fun QuizConfigScreenContent(
                                 text = topicName,
                                 fontSize = 14.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) PrimaryBlue else TextMain
+                                color = if (isSelected) PrimaryBlue else StudyTheme.textMain
                             )
                             Surface(
                                 color = if (isSelected) PrimaryBlue else Color(0xFFCBD5E1),
@@ -210,7 +207,7 @@ fun QuizConfigScreenContent(
                         Text(
                             text = "de ${state.selectedTopicQuestionsCount}",
                             fontSize = 13.sp,
-                            color = TextSub,
+                            color = StudyTheme.textSub,
                             modifier = Modifier.padding(bottom = 6.dp)
                         )
                     }
@@ -224,7 +221,7 @@ fun QuizConfigScreenContent(
                         colors = SliderDefaults.colors(
                             thumbColor = PrimaryBlue,
                             activeTrackColor = PrimaryBlue,
-                            inactiveTrackColor = CardBorder
+                            inactiveTrackColor = StudyTheme.cardBorder
                         )
                     )
 
@@ -242,8 +239,8 @@ fun QuizConfigScreenContent(
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(20.dp))
-                                        .background(if (isSelected) PrimaryBlue else LightBg)
-                                        .border(1.dp, if (isSelected) PrimaryBlue else CardBorder, RoundedCornerShape(20.dp))
+                                        .background(if (isSelected) PrimaryBlue else StudyTheme.surfaceBg)
+                                        .border(1.dp, if (isSelected) PrimaryBlue else StudyTheme.cardBorder, RoundedCornerShape(20.dp))
                                         .clickable { onIntent(QuizConfigIntent.OnQuestionCountChange(value)) }
                                         .padding(vertical = 8.dp),
                                     contentAlignment = Alignment.Center
@@ -252,7 +249,7 @@ fun QuizConfigScreenContent(
                                         text = label,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else TextSub
+                                        color = if (isSelected) Color.White else StudyTheme.textSub
                                     )
                                 }
                             }
@@ -269,7 +266,7 @@ fun QuizConfigScreenContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LightBg, RoundedCornerShape(12.dp))
+                        .background(StudyTheme.surfaceBg, RoundedCornerShape(12.dp))
                         .padding(4.dp)
                 ) {
                     Box(
@@ -285,7 +282,7 @@ fun QuizConfigScreenContent(
                             text = "Ordenado",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = if (!state.isRandomOrder) Color.White else TextSub
+                            color = if (!state.isRandomOrder) Color.White else StudyTheme.textSub
                         )
                     }
                     Box(
@@ -301,7 +298,7 @@ fun QuizConfigScreenContent(
                             text = "Aleatorio",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
-                            color = if (state.isRandomOrder) Color.White else TextSub
+                            color = if (state.isRandomOrder) Color.White else StudyTheme.textSub
                         )
                     }
                 }
@@ -321,7 +318,7 @@ fun QuizConfigScreenContent(
                         text = "Activar temporizador",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextMain
+                        color = StudyTheme.textMain
                     )
                     Switch(
                         checked = state.isTimerEnabled,
@@ -402,8 +399,8 @@ private fun ConfigSectionCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBg),
-        border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder)
+        colors = CardDefaults.cardColors(containerColor = StudyTheme.cardBg),
+        border = androidx.compose.foundation.BorderStroke(1.dp, StudyTheme.cardBorder)
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -417,7 +414,7 @@ private fun ConfigSectionCard(
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        tint = TextSub,
+                        tint = StudyTheme.textSub,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -425,7 +422,7 @@ private fun ConfigSectionCard(
                     text = title,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextSub
+                    color = StudyTheme.textSub
                 )
             }
             content()
@@ -444,10 +441,10 @@ private fun CorrectionOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(if (isSelected) PrimaryBlueLight else LightBg)
+            .background(if (isSelected) PrimaryBlueLight else StudyTheme.surfaceBg)
             .border(
                 width = 1.dp,
-                color = if (isSelected) PrimaryBlue else CardBorder,
+                color = if (isSelected) PrimaryBlue else StudyTheme.cardBorder,
                 shape = RoundedCornerShape(12.dp)
             )
             .clickable { onClick() }
@@ -458,7 +455,7 @@ private fun CorrectionOptionItem(
         Icon(
             imageVector = if (isSelected) Icons.Default.CheckCircle else Icons.Outlined.Circle,
             contentDescription = null,
-            tint = if (isSelected) PrimaryBlue else TextSub,
+            tint = if (isSelected) PrimaryBlue else StudyTheme.textSub,
             modifier = Modifier.size(22.dp)
         )
         Column {
@@ -466,12 +463,12 @@ private fun CorrectionOptionItem(
                 text = title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (isSelected) PrimaryBlue else TextMain
+                color = if (isSelected) PrimaryBlue else StudyTheme.textMain
             )
             Text(
                 text = subtitle,
                 fontSize = 12.sp,
-                color = TextSub
+                color = StudyTheme.textSub
             )
         }
     }

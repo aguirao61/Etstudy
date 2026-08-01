@@ -31,9 +31,9 @@ fun UserProfileCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .border(2.dp, ProfileBorder, RoundedCornerShape(24.dp)),
+            .border(2.dp, StudyTheme.profileBorder, RoundedCornerShape(24.dp)),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = ProfileBg)
+        colors = CardDefaults.cardColors(containerColor = StudyTheme.profileBg)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -45,14 +45,14 @@ fun UserProfileCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(Color.White)
-                    .border(1.dp, ProfileBorder, CircleShape),
+                    .background(StudyTheme.cardBg)
+                    .border(1.dp, StudyTheme.cardBorder, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
                     contentDescription = "Avatar",
-                    tint = TextSub,
+                    tint = StudyTheme.textSub,
                     modifier = Modifier.size(36.dp)
                 )
             }
@@ -63,7 +63,7 @@ fun UserProfileCard(
                     text = "Nombre: $name",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = TextMain
+                    color = StudyTheme.textMain
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -73,7 +73,7 @@ fun UserProfileCard(
                     text = "EXP: $expCurrent / $expMax",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextSub
+                    color = StudyTheme.textSub
                 )
                 LinearProgressIndicator(
                     progress = { expCurrent.toFloat() / expMax.toFloat() },
@@ -82,7 +82,7 @@ fun UserProfileCard(
                         .height(8.dp)
                         .clip(CircleShape),
                     color = ExpColor,
-                    trackColor = Color.White
+                    trackColor = StudyTheme.surfaceBg
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -92,7 +92,7 @@ fun UserProfileCard(
                     text = "Nivel: $level",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextSub
+                    color = LevelColor
                 )
                 LinearProgressIndicator(
                     progress = { 0.65f }, // Ejemplo de progreso de nivel
@@ -101,7 +101,7 @@ fun UserProfileCard(
                         .height(8.dp)
                         .clip(CircleShape),
                     color = LevelColor,
-                    trackColor = Color.White
+                    trackColor = StudyTheme.surfaceBg
                 )
             }
         }

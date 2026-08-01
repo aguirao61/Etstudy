@@ -37,9 +37,11 @@ import com.example.studyapp.questions.domain.SubjectFlow
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubjectsScreen(
+    flowType: String,
     viewModel: SubjectsViewModel = viewModel(),
     onNavigateBack: () -> Unit = {},
-    onNavigateToQuizConfig: (subjectId: Int, subjectName: String, flow: String) -> Unit = { _, _, _ -> }
+    onNavigateToQuizConfig: (subjectId: Int, subjectName: String) -> Unit = { _, _ -> },
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -47,6 +49,11 @@ fun SubjectsScreen(
     // IMPORTANTE: Asegurar que el callback de navegación esté actualizado
     val currentOnNavigateBack by rememberUpdatedState(onNavigateBack)
     val currentOnNavigateToQuizConfig by rememberUpdatedState(onNavigateToQuizConfig)
+    val currentOnNavigateToProfile by rememberUpdatedState(onNavigateToProfile)
+
+    LaunchedEffect(flowType) {
+        viewModel.onIntent(SubjectsIntent.Initialize(flowType))
+    }
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
@@ -58,7 +65,10 @@ fun SubjectsScreen(
                     currentOnNavigateBack()
                 }
                 is SubjectsEffect.NavigateToQuizConfig -> {
-                    currentOnNavigateToQuizConfig(effect.subject.id, effect.subject.name, effect.flow.name)
+                    currentOnNavigateToQuizConfig(effect.subject.id, effect.subject.name)
+                }
+                SubjectsEffect.NavigateToProfile -> {
+                    currentOnNavigateToProfile()
                 }
             }
         }
@@ -104,7 +114,7 @@ fun SubjectsScreenContent(
                         text = title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp,
-                        color = TextMain
+                        color = StudyTheme.textMain
                     )
                 },
                 navigationIcon = {
@@ -112,16 +122,16 @@ fun SubjectsScreenContent(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Atrás",
-                            tint = TextMain
+                            tint = StudyTheme.textMain
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = SurfaceBg
+                    containerColor = StudyTheme.surfaceBg
                 )
             )
         },
-        containerColor = SurfaceBg
+        containerColor = StudyTheme.surfaceBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -151,14 +161,14 @@ fun SubjectsScreenContent(
                 placeholder = { 
                     Text(
                         text = "Buscar asignatura o código...",
-                        color = TextSub.copy(alpha = 0.9f) // Hint con más contraste
+                        color = StudyTheme.textSub.copy(alpha = 0.9f) // Hint con más contraste
                     ) 
                 },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Buscar",
-                        tint = TextSub
+                        tint = StudyTheme.textSub
                     )
                 },
                 trailingIcon = {
@@ -171,12 +181,12 @@ fun SubjectsScreenContent(
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedBorderColor = Color(0xFF3B82F6),
-                    unfocusedBorderColor = Color(0xFFCBD5E1),
-                    focusedTextColor = TextMain,
-                    unfocusedTextColor = TextMain
+                    focusedContainerColor = StudyTheme.cardBg,
+                    unfocusedContainerColor = StudyTheme.cardBg,
+                    focusedBorderColor = PrimaryBlue,
+                    unfocusedBorderColor = StudyTheme.cardBorder,
+                    focusedTextColor = StudyTheme.textMain,
+                    unfocusedTextColor = StudyTheme.textMain
                 )
             )
 
@@ -186,7 +196,7 @@ fun SubjectsScreenContent(
             TabRow(
                 selectedTabIndex = state.selectedTab,
                 containerColor = Color.Transparent,
-                contentColor = Color(0xFF3B82F6),
+                contentColor = PrimaryBlue,
                 divider = {}
             ) {
                 Tab(
@@ -228,7 +238,7 @@ fun SubjectsScreenContent(
                                 "No tienes asignaturas favoritas aún"
                             else
                                 "No se encontraron asignaturas",
-                            color = TextSub,
+                            color = StudyTheme.textSub,
                             fontSize = 14.sp
                         )
                     }
@@ -251,7 +261,7 @@ fun SubjectsScreenContent(
                             SwipeToDismissBox(
                                 state = dismissState,
                                 backgroundContent = {
-                                    val color = if (subject.isFavorite) Color(0xFF94A3B8) else Color(0xFFEAB308)
+                                    val color = if (subject.isFavorite) GrayMid else Color(0xFFEAB308)
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
@@ -295,7 +305,7 @@ fun SubjectCardItem(
             .fillMaxWidth()
             .clickable { onClick(subject) },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = StudyTheme.cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -314,13 +324,13 @@ fun SubjectCardItem(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0xFFE0F2FE)),
+                        .background(PrimaryBlueLight),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.Book,
                         contentDescription = null,
-                        tint = Color(0xFF0284C7)
+                        tint = PrimaryBlue
                     )
                 }
                 Column {
@@ -328,12 +338,12 @@ fun SubjectCardItem(
                         text = subject.name,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 15.sp,
-                        color = TextMain
+                        color = StudyTheme.textMain
                     )
                     Text(
                         text = subject.code,
                         fontSize = 12.sp,
-                        color = TextSub
+                        color = StudyTheme.textSub
                     )
                 }
             }

@@ -10,7 +10,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.School
-import androidx.compose.material.icons.filled.Store
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -35,7 +36,8 @@ import com.example.studyapp.questions.domain.SubjectFlow
 @Composable
 fun StudyHomeScreen(
     viewModel: HomeViewModel = viewModel(),
-    onNavigateToSubjects: (SubjectFlow) -> Unit = {}
+    onNavigateToStudy: (SubjectFlow) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -47,8 +49,11 @@ fun StudyHomeScreen(
                 is HomeEffect.ShowToast -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
-                is HomeEffect.NavigateToSubjects -> {
-                    onNavigateToSubjects(effect.flow)
+                is HomeEffect.NavigateToStudy -> {
+                    onNavigateToStudy(effect.flow)
+                }
+                HomeEffect.NavigateToProfile -> {
+                    onNavigateToProfile()
                 }
             }
         }
@@ -75,7 +80,7 @@ fun StudyHomeScreenContent(
                 onNavClick = { item -> onIntent(HomeIntent.OnNavClick(item)) }
             )
         },
-        containerColor = SurfaceBg
+        containerColor = StudyTheme.surfaceBg
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -111,7 +116,7 @@ fun StudyHomeScreenContent(
                 // Botón central "INICIAR"
                 CustomStartButton(
                     text = "INICIAR",
-                    brush = Brush.verticalGradient(colors = listOf(Color(0xFF3B82F6), Color(0xFF1D4ED8))),
+                    brush = Brush.verticalGradient(colors = listOf(PrimaryBlue, PrimaryBlueDark)),
                     onClick = { onIntent(HomeIntent.OnStartClick) }
                 )
 
@@ -131,7 +136,7 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(28.dp),
-            color = Color.White,
+            color = StudyTheme.cardBg,
             tonalElevation = 6.dp
         ) {
             Column(
@@ -145,30 +150,30 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
                     text = "Selecciona una opción",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextMain,
+                    color = StudyTheme.textMain,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
 
                 CustomStartButton(
                     text = "TESTS",
-                    brush = Brush.verticalGradient(colors = listOf(Color(0xFF10B981), Color(0xFF059669))), // Verde
+                    brush = Brush.verticalGradient(colors = listOf(MutedGreen, MutedGreenDark)), // Verde suave
                     onClick = { onOptionClick("Tests") }
                 )
 
                 CustomStartButton(
                     text = "TESTS DE FALLOS",
-                    brush = Brush.verticalGradient(colors = listOf(Color(0xFFEF4444), Color(0xFFDC2626))), // Rojo
+                    brush = Brush.verticalGradient(colors = listOf(MutedRed, MutedRedDark)), // Rojo suave
                     onClick = { onOptionClick("Tests de fallos") }
                 )
 
                 CustomStartButton(
                     text = "PRÓXIMAMENTE...",
-                    brush = Brush.verticalGradient(colors = listOf(Color(0xFF94A3B8), Color(0xFF64748B))), // Gris
+                    brush = Brush.verticalGradient(colors = listOf(MutedGray, MutedGrayDark)), // Gris suave
                     onClick = { onOptionClick("Próximamente") }
                 )
                 
                 TextButton(onClick = onDismiss, modifier = Modifier.padding(top = 8.dp)) {
-                    Text("CANCELAR", color = Color(0xFF3B82F6), fontWeight = FontWeight.Bold)
+                    Text("CANCELAR", color = PrimaryBlue, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -234,7 +239,7 @@ fun ChallengeBanner() {
                 Text(
                     text = "Completa las tareas de hoy",
                     fontSize = 12.sp,
-                    color = TextSub
+                    color = StudyTheme.textSub
                 )
             }
             Icon(
@@ -265,14 +270,14 @@ fun FloatingGuideButton(onClick: () -> Unit) {
 @Composable
 fun BottomNavigationBar(onNavClick: (String) -> Unit) {
     NavigationBar(
-        containerColor = Color.White,
+        containerColor = StudyTheme.cardBg,
         tonalElevation = 8.dp
     ) {
         val items = listOf(
             Triple("Inicio", Icons.Default.Home, true),
             Triple("Comunidad", Icons.Default.Group, false),
             Triple("Cursos", Icons.Default.School, false),
-            Triple("Tienda", Icons.Default.Store, false)
+            Triple("Ajustes", Icons.Default.Settings, false)
         )
 
         items.forEach { (label, icon, isSelected) ->
@@ -282,10 +287,10 @@ fun BottomNavigationBar(onNavClick: (String) -> Unit) {
                 icon = { Icon(icon, contentDescription = label) },
                 label = { Text(label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color(0xFF1D4ED8), // Azul vibrante para el seleccionado
-                    selectedTextColor = Color(0xFF1D4ED8),
-                    unselectedIconColor = TextSub,         // Gris azulado para los otros
-                    unselectedTextColor = TextSub,
+                    selectedIconColor = PrimaryBlueDark, // Azul vibrante para el seleccionado
+                    selectedTextColor = PrimaryBlueDark,
+                    unselectedIconColor = StudyTheme.textSub,         // Gris azulado para los otros
+                    unselectedTextColor = StudyTheme.textSub,
                     indicatorColor = Color(0xFFDBEAFE)    // Fondo suave para el icono seleccionado
                 )
             )

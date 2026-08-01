@@ -2,41 +2,44 @@ package com.example.studyapp.core.presentation.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = PrimaryBlue,
+    secondary = LevelColor,
+    tertiary = ExpColor,
+    background = DarkSurfaceBg,
+    surface = DarkCardBg,
+    onBackground = DarkTextMain,
+    onSurface = DarkTextMain,
+    onSurfaceVariant = DarkTextSub,
+    outline = DarkCardBorder,
+    primaryContainer = PrimaryBlueLight,
+    onPrimaryContainer = PrimaryBlueDark
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = PrimaryBlue,
+    secondary = LevelColor,
+    tertiary = ExpColor,
+    background = LightSurfaceBg,
+    surface = LightCardBg,
+    onBackground = LightTextMain,
+    onSurface = LightTextMain,
+    onSurfaceVariant = LightTextSub,
+    outline = LightCardBorder,
+    primaryContainer = PrimaryBlueLight,
+    onPrimaryContainer = PrimaryBlueDark
 )
 
 @Composable
 fun StudyAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Dynamic color is disabled to keep our brand colors
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -54,4 +57,25 @@ fun StudyAppTheme(
         typography = Typography,
         content = content
     )
+}
+
+// Helpers para acceder a los colores de forma semántica
+object StudyTheme {
+    val colorScheme: ColorScheme
+        @Composable
+        get() = MaterialTheme.colorScheme
+
+    val surfaceBg @Composable get() = colorScheme.background
+    val cardBg @Composable get() = colorScheme.surface
+    val cardBorder @Composable get() = colorScheme.outline
+    val textMain @Composable get() = colorScheme.onBackground
+    val textSub @Composable get() = colorScheme.onSurfaceVariant
+    
+    // Perfil adaptativo
+    val profileBg @Composable get() = if (isSystemInDarkTheme()) DarkProfileBg else LightProfileBg
+    val profileBorder @Composable get() = if (isSystemInDarkTheme()) DarkProfileBorder else LightProfileBorder
+
+    // Adaptativos manuales
+    val topicPillBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF1E293B) else Color(0xFFDBEAFE)
+    val topicPillText @Composable get() = if (isSystemInDarkTheme()) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
 }

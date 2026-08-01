@@ -39,11 +39,11 @@ class HomeViewModel : ViewModel() {
                 sendEffect(HomeEffect.ShowToast("Botón GUÍA pulsado"))
             }
             HomeIntent.OnProfileClick -> {
-                sendEffect(HomeEffect.ShowToast("Perfil de ${_state.value.userName} pulsado"))
+                sendEffect(HomeEffect.NavigateToProfile)
             }
             is HomeIntent.OnNavClick -> {
                 if (intent.item == "Cursos") {
-                    sendEffect(HomeEffect.NavigateToSubjects(SubjectFlow.BROWSE))
+                    sendEffect(HomeEffect.NavigateToStudy(SubjectFlow.BROWSE))
                 } else {
                     sendEffect(HomeEffect.ShowToast("Navegación: ${intent.item} pulsada"))
                 }
@@ -60,7 +60,7 @@ class HomeViewModel : ViewModel() {
                 }
                 
                 if (flow != null) {
-                    sendEffect(HomeEffect.NavigateToSubjects(flow))
+                    sendEffect(HomeEffect.NavigateToStudy(flow))
                 } else {
                     sendEffect(HomeEffect.ShowToast("Opción seleccionada: ${intent.option}"))
                 }
