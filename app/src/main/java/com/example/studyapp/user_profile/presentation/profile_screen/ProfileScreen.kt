@@ -1,5 +1,6 @@
 package com.example.studyapp.user_profile.presentation.profile_screen
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -32,6 +35,7 @@ import androidx.compose.ui.unit.sp
 
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.studyapp.R
 import com.example.studyapp.core.presentation.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -466,11 +470,19 @@ fun ProfileScreen(
                                     .border(1.dp, StudyTheme.cardBorder, RoundedCornerShape(12.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.AutoAwesome,
+//                                Icon(
+//                                    imageVector = Icons.Default.AutoAwesome,
+//                                    contentDescription = null,
+//                                    tint = if (index < 2) LevelColor else StudyTheme.textSub.copy(alpha = 0.3f),
+//                                    modifier = Modifier.size(24.dp)
+//                                )
+                                Image(
+                                    painter = painterResource(id = R.drawable.trofeo_tecnologia_materiales_icon_1000),
                                     contentDescription = null,
-                                    tint = if (index < 2) LevelColor else StudyTheme.textSub.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(24.dp)
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(top = 6.dp)
                                 )
                             }
                         }

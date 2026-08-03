@@ -11,8 +11,9 @@ import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Assignment
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -156,12 +157,14 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
 
                 CustomStartButton(
                     text = "TESTS",
+                    icon = Icons.Default.Assignment,
                     brush = Brush.verticalGradient(colors = listOf(MutedGreen, MutedGreenDark)), // Verde suave
                     onClick = { onOptionClick("Tests") }
                 )
 
                 CustomStartButton(
                     text = "TESTS DE FALLOS",
+                    icon = Icons.Default.Warning,
                     brush = Brush.verticalGradient(colors = listOf(MutedRed, MutedRedDark)), // Rojo suave
                     onClick = { onOptionClick("Tests de fallos") }
                 )
@@ -185,7 +188,8 @@ fun CustomStartButton(
     text: String,
     brush: Brush,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null
 ) {
     Button(
         onClick = onClick,
@@ -203,12 +207,26 @@ fun CustomStartButton(
                 .background(brush = brush),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = text,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                Text(
+                    text = text,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+            }
         }
     }
 }

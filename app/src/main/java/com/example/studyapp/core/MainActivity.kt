@@ -1,4 +1,4 @@
-package com.example.studyapp
+package com.example.studyapp.core
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-                    
+
                     NavHost(
                         navController = navController,
                         startDestination = "home"
@@ -61,8 +61,9 @@ class MainActivity : ComponentActivity() {
                                 val parentEntry = remember(entry) {
                                     navController.getBackStackEntry("study/{flowType}")
                                 }
-                                val flowType = parentEntry.arguments?.getString("flowType") ?: "BROWSE"
-                                
+                                val flowType =
+                                    parentEntry.arguments?.getString("flowType") ?: "BROWSE"
+
                                 SubjectsScreen(
                                     flowType = flowType,
                                     onNavigateBack = {
@@ -86,7 +87,8 @@ class MainActivity : ComponentActivity() {
                                 val parentEntry = remember(entry) {
                                     navController.getBackStackEntry("study/{flowType}")
                                 }
-                                val flowType = parentEntry.arguments?.getString("flowType") ?: "TEST"
+                                val flowType =
+                                    parentEntry.arguments?.getString("flowType") ?: "TEST"
 
                                 QuizConfigScreen(
                                     flowType = flowType,
@@ -114,7 +116,9 @@ class MainActivity : ComponentActivity() {
                                     onNavigateToResults = { score, total ->
                                         navController.navigate("quiz_results/$score/$total") {
                                             // Pop the quiz_play screen so back from results goes to config
-                                            popUpTo("quiz_play/{subjectId}/{topicIndex}/{count}/{immediate}") { inclusive = true }
+                                            popUpTo("quiz_play/{subjectId}/{topicIndex}/{count}/{immediate}") {
+                                                inclusive = true
+                                            }
                                         }
                                     }
                                 )
