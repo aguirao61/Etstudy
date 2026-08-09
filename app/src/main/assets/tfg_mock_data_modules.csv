@@ -1,0 +1,29 @@
+codigoAsignatura,modulo,number
+55000038,Conformado,1
+55000038,Soldadura,2
+55000038,Ensayos No Destructivos,3
+55000038,Ensayos Destructivos,4
+55000024,Conceptos Generales de los Fluidos,1
+55000024,Fluidosestática,2
+55000024,Tensión Superficial,3
+55000024,Cinemática,4
+55000024,Ecuaciones de Conservación Integrales,5
+55000024,Ecuaciones de Conservación Diferenciales,6
+55000035,Torsión,1
+55000035,Cortante,2
+55000035,Solicitaciones Combinadas,3
+55000035,Hiperesticidad,4
+55000035,Pandeo,5
+55000035,Introducción al Cálculo Plástico,6
+55000007,Introducción a la Informática,1
+55000007,Estructura de un Programa,2
+55000007,Datos Simples,3
+55000007,Expresiones y Operadores,4
+55000007,Sentencias,5
+55000007,Rutinas,6
+55000007,Punteros,7
+55000007,Arrays,8
+55000007,Cadenas de Caracteres,9
+55000007,Estructuras,10
+55000007,Archivos,11
+55000007,Variables y Estructuras Dinámicas,12
