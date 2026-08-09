@@ -7,6 +7,7 @@ data class QuizConfigState(
     val subjectName: String = "",
     val flowType: SubjectFlow = SubjectFlow.TEST,
     val topics: List<Pair<String, Int>> = emptyList(),
+    val topicIds: List<Int> = emptyList(),
     val selectedTopicIndex: Int = 0,
     val questionCount: Int = 25,
     val isRandomOrder: Boolean = true,

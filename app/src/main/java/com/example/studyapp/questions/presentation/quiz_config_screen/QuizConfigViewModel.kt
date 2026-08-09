@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyapp.questions.domain.SubjectFlow
+import com.example.studyapp.questions.domain.repositories.SubjectRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class QuizConfigViewModel(
+    private val subjectRepository: SubjectRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -23,29 +25,55 @@ class QuizConfigViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
+        val userId = savedStateHandle.get<Int>("userId") ?: 0
         val subjectId = savedStateHandle.get<Int>("subjectId") ?: 0
         val subjectName = savedStateHandle.get<String>("subjectName") ?: ""
         val flowName = savedStateHandle.get<String>("flowType") ?: SubjectFlow.TEST.name
         val flow = try { SubjectFlow.valueOf(flowName) } catch (e: Exception) { SubjectFlow.TEST }
 
-        // Mock topics data based on subjectId (simulating a DB fetch)
-        val mockTopics = listOf(
-            "Todos los temas" to 2391,
-            "T1 · Sinterizado" to 569,
-            "T2 · Soldadura" to 507,
-            "T3 · Ens. Mecánicos" to 552,
-            "T4 · Ens. No Destructivos" to 763
-        )
-
         _state.update {
             it.copy(
                 subjectId = subjectId,
                 subjectName = subjectName,
-                flowType = flow,
-                topics = mockTopics,
-                totalQuestionsAvailable = mockTopics[0].second,
-                questionCount = 25.coerceAtMost(mockTopics[0].second)
+                flowType = flow
             )
+        }
+
+        viewModelScope.launch {
+            val totalQuestions = if (flow == SubjectFlow.ERROR_TEST) {
+                subjectRepository.getFailedQuestionCountForCourse(userId, subjectId)
+            } else {
+                subjectRepository.getQuestionCountForCourse(subjectId)
+            }
+
+            subjectRepository.getModules(userId, subjectId).collect { modules ->
+                val topicsWithCounts = mutableListOf<Pair<String, Int>>()
+                val topicIds = mutableListOf<Int>()
+                
+                // Opción "Todos los temas"
+                topicsWithCounts.add("Todos los temas" to totalQuestions)
+                topicIds.add(0)
+                
+                // Módulos individuales
+                modules.forEach { module ->
+                    val count = if (flow == SubjectFlow.ERROR_TEST) {
+                        subjectRepository.getFailedQuestionCountForModule(userId, module.id)
+                    } else {
+                        subjectRepository.getQuestionCountForModule(module.id)
+                    }
+                    topicsWithCounts.add("T${module.number} · ${module.name}" to count)
+                    topicIds.add(module.id)
+                }
+
+                _state.update {
+                    it.copy(
+                        topics = topicsWithCounts,
+                        topicIds = topicIds,
+                        totalQuestionsAvailable = totalQuestions,
+                        questionCount = 25.coerceAtMost(totalQuestions)
+                    )
+                }
+            }
         }
     }
 
@@ -85,14 +113,16 @@ class QuizConfigViewModel(
             }
             QuizConfigIntent.OnStartTestClick -> {
                 val s = _state.value
+                val moduleId = if (s.topicIds.isNotEmpty()) s.topicIds[s.selectedTopicIndex] else 0
                 sendEffect(
                     QuizConfigEffect.StartQuiz(
                         subjectId = s.subjectId,
-                        topicIndex = s.selectedTopicIndex,
+                        moduleId = moduleId,
                         questionCount = s.questionCount,
                         isRandom = s.isRandomOrder,
                         isTimerEnabled = s.isTimerEnabled,
-                        immediateCorrection = s.immediateCorrection
+                        immediateCorrection = s.immediateCorrection,
+                        flowType = s.flowType.name
                     )
                 )
             }

@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.studyapp.core.presentation.ui.theme.*
+import com.example.studyapp.core.util.NumberFormatter
 
 @Composable
 fun UserProfileCard(
@@ -70,7 +71,7 @@ fun UserProfileCard(
 
                 // Barra 1: EXP
                 Text(
-                    text = "EXP: $expCurrent / $expMax",
+                    text = "EXP: ${NumberFormatter.formatWithCommas(expCurrent)} / ${NumberFormatter.formatWithCommas(expMax)}",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = StudyTheme.textSub
@@ -95,7 +96,7 @@ fun UserProfileCard(
                     color = LevelColor
                 )
                 LinearProgressIndicator(
-                    progress = { 0.65f }, // Ejemplo de progreso de nivel
+                    progress = { level.toFloat() / 999f },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)

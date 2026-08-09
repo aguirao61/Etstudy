@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
     id("kotlinx-serialization")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -42,6 +43,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.lifecycle.viewmodel.savedstate)
     //room
     val room_version = "2.8.3"
     implementation("androidx.room:room-runtime:$room_version")

@@ -31,7 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyapp.core.presentation.components.UserProfileCard
 import com.example.studyapp.core.presentation.ui.theme.*
-import com.example.studyapp.questions.domain.Subject
+import com.example.studyapp.questions.domain.models.Subject
 import com.example.studyapp.questions.domain.SubjectFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,159 +133,176 @@ fun SubjectsScreenContent(
         },
         containerColor = StudyTheme.surfaceBg
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
-            UserProfileCard(
-                name = state.userName,
-                level = state.level,
-                expCurrent = state.expCurrent,
-                expMax = state.expMax,
-                onClick = { onIntent(SubjectsIntent.OnProfileClick) }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // SEARCHBAR con HINT más oscuro
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = { onIntent(SubjectsIntent.OnSearchQueryChange(it)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp)),
-                placeholder = { 
-                    Text(
-                        text = "Buscar asignatura o código...",
-                        color = StudyTheme.textSub.copy(alpha = 0.9f) // Hint con más contraste
-                    ) 
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar",
-                        tint = StudyTheme.textSub
-                    )
-                },
-                trailingIcon = {
-                    if (state.searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { onIntent(SubjectsIntent.OnSearchQueryChange("")) }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Limpiar")
-                        }
-                    }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = StudyTheme.cardBg,
-                    unfocusedContainerColor = StudyTheme.cardBg,
-                    focusedBorderColor = PrimaryBlue,
-                    unfocusedBorderColor = StudyTheme.cardBorder,
-                    focusedTextColor = StudyTheme.textMain,
-                    unfocusedTextColor = StudyTheme.textMain
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // TABS
-            TabRow(
-                selectedTabIndex = state.selectedTab,
-                containerColor = Color.Transparent,
-                contentColor = PrimaryBlue,
-                divider = {}
-            ) {
-                Tab(
-                    selected = state.selectedTab == 0,
-                    onClick = { onIntent(SubjectsIntent.OnTabSelect(0)) },
-                    text = {
-                        Text(
-                            text = "Todas (${state.subjects.size})",
-                            fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
-                Tab(
-                    selected = state.selectedTab == 1,
-                    onClick = { onIntent(SubjectsIntent.OnTabSelect(1)) },
-                    text = {
-                        Text(
-                            text = "Favoritas (${state.subjects.count { it.isFavorite }})",
-                            fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                )
+        if (state.isLoading && state.subjects.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = PrimaryBlue)
             }
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
+                UserProfileCard(
+                    name = state.userName,
+                    level = state.level,
+                    expCurrent = state.expCurrent,
+                    expMax = state.expMax,
+                    onClick = { onIntent(SubjectsIntent.OnProfileClick) }
+                )
 
-            // PAGER para poder deslizar entre listas
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize().weight(1f),
-                verticalAlignment = Alignment.Top
-            ) { pageIndex ->
-                val listToShow = if (pageIndex == 0) state.allSubjectsFiltered else state.favoriteSubjectsFiltered
-                
-                if (listToShow.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // SEARCHBAR con HINT más oscuro
+                OutlinedTextField(
+                    value = state.searchQuery,
+                    onValueChange = { onIntent(SubjectsIntent.OnSearchQueryChange(it)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp)),
+                    placeholder = {
                         Text(
-                            text = if (pageIndex == 1 && state.searchQuery.isEmpty())
-                                "No tienes asignaturas favoritas aún"
-                            else
-                                "No se encontraron asignaturas",
-                            color = StudyTheme.textSub,
-                            fontSize = 14.sp
+                            text = "Buscar asignatura o código...",
+                            color = StudyTheme.textSub.copy(alpha = 0.9f) // Hint con más contraste
                         )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(vertical = 8.dp)
-                    ) {
-                        items(listToShow, key = { it.id }) { subject ->
-                            val dismissState = rememberSwipeToDismissBoxState()
-                            
-                            LaunchedEffect(dismissState.currentValue) {
-                                if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
-                                    onIntent(SubjectsIntent.OnFavoriteToggle(subject))
-                                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                                }
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Buscar",
+                            tint = StudyTheme.textSub
+                        )
+                    },
+                    trailingIcon = {
+                        if (state.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { onIntent(SubjectsIntent.OnSearchQueryChange("")) }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Limpiar")
                             }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = StudyTheme.cardBg,
+                        unfocusedContainerColor = StudyTheme.cardBg,
+                        focusedBorderColor = PrimaryBlue,
+                        unfocusedBorderColor = StudyTheme.cardBorder,
+                        focusedTextColor = StudyTheme.textMain,
+                        unfocusedTextColor = StudyTheme.textMain
+                    )
+                )
 
-                            SwipeToDismissBox(
-                                state = dismissState,
-                                backgroundContent = {
-                                    val color = if (subject.isFavorite) GrayMid else Color(0xFFEAB308)
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(color)
-                                            .padding(horizontal = 20.dp),
-                                        contentAlignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) 
-                                            Alignment.CenterStart else Alignment.CenterEnd
-                                    ) {
-                                        Icon(
-                                            imageVector = if (subject.isFavorite) Icons.Outlined.StarBorder else Icons.Default.Star,
-                                            contentDescription = null,
-                                            tint = Color.White
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // TABS
+                TabRow(
+                    selectedTabIndex = state.selectedTab,
+                    containerColor = Color.Transparent,
+                    contentColor = PrimaryBlue,
+                    divider = {}
+                ) {
+                    Tab(
+                        selected = state.selectedTab == 0,
+                        onClick = { onIntent(SubjectsIntent.OnTabSelect(0)) },
+                        text = {
+                            Text(
+                                text = "Todas (${state.subjects.size})",
+                                fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    )
+                    Tab(
+                        selected = state.selectedTab == 1,
+                        onClick = { onIntent(SubjectsIntent.OnTabSelect(1)) },
+                        text = {
+                            Text(
+                                text = "Favoritas (${state.subjects.count { it.isFavorite }})",
+                                fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // PAGER para poder deslizar entre listas
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize().weight(1f),
+                    verticalAlignment = Alignment.Top
+                ) { pageIndex ->
+                    val listToShow =
+                        if (pageIndex == 0) state.allSubjectsFiltered else state.favoriteSubjectsFiltered
+
+                    if (listToShow.isEmpty()) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (pageIndex == 1 && state.searchQuery.isEmpty())
+                                    "No tienes asignaturas favoritas aún"
+                                else
+                                    "No se encontraron asignaturas",
+                                color = StudyTheme.textSub,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            items(listToShow, key = { it.id }) { subject ->
+                                val dismissState = rememberSwipeToDismissBoxState()
+
+                                LaunchedEffect(dismissState.currentValue) {
+                                    if (dismissState.currentValue != SwipeToDismissBoxValue.Settled) {
+                                        onIntent(SubjectsIntent.OnFavoriteToggle(subject))
+                                        dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                                    }
+                                }
+
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    backgroundContent = {
+                                        val color =
+                                            if (subject.isFavorite) GrayMid else Color(0xFFEAB308)
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(color)
+                                                .padding(horizontal = 20.dp),
+                                            contentAlignment = if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd)
+                                                Alignment.CenterStart else Alignment.CenterEnd
+                                        ) {
+                                            Icon(
+                                                imageVector = if (subject.isFavorite) Icons.Outlined.StarBorder else Icons.Default.Star,
+                                                contentDescription = null,
+                                                tint = Color.White
+                                            )
+                                        }
+                                    },
+                                    content = {
+                                        SubjectCardItem(
+                                            subject = subject,
+                                            onFavoriteToggle = {
+                                                onIntent(
+                                                    SubjectsIntent.OnFavoriteToggle(
+                                                        it
+                                                    )
+                                                )
+                                            },
+                                            onClick = { onIntent(SubjectsIntent.OnSubjectClick(it)) }
                                         )
                                     }
-                                },
-                                content = {
-                                    SubjectCardItem(
-                                        subject = subject,
-                                        onFavoriteToggle = { onIntent(SubjectsIntent.OnFavoriteToggle(it)) },
-                                        onClick = { onIntent(SubjectsIntent.OnSubjectClick(it)) }
-                                    )
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }

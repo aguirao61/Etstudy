@@ -72,7 +72,9 @@ fun StudyHomeScreenContent(
     onIntent: (HomeIntent) -> Unit
 ) {
     if (state.isStartPopupVisible) {
-        StartTestDialog(onDismiss = { onIntent(HomeIntent.DismissStartPopup) }, onOptionClick = { onIntent(HomeIntent.OnTestOptionClick(it)) })
+        StartTestDialog(
+            onDismiss = { onIntent(HomeIntent.DismissStartPopup) },
+            onOptionClick = { onIntent(HomeIntent.OnTestOptionClick(it)) })
     }
 
     Scaffold(
@@ -83,46 +85,60 @@ fun StudyHomeScreenContent(
         },
         containerColor = StudyTheme.surfaceBg
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 1. COMPONENTE DE PERFIL SUPERIOR
-            UserProfileCard(
-                name = state.userName,
-                expCurrent = state.expCurrent,
-                expMax = state.expMax,
-                level = state.level,
-                modifier = Modifier.padding(top = 16.dp),
-                onClick = { onIntent(HomeIntent.OnProfileClick) }
-            )
-
-            // Espacio flexible
-            Spacer(modifier = Modifier.weight(1f))
-
-            // CONTENIDO INFERIOR
+        if (state.isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = PrimaryBlue)
+            }
+        } else {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Icono Guía
-                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    FloatingGuideButton(onClick = { onIntent(HomeIntent.OnGuideClick) })
-                }
-
-                // Botón central "INICIAR"
-                CustomStartButton(
-                    text = "INICIAR",
-                    brush = Brush.verticalGradient(colors = listOf(PrimaryBlue, PrimaryBlueDark)),
-                    onClick = { onIntent(HomeIntent.OnStartClick) }
+                // 1. COMPONENTE DE PERFIL SUPERIOR
+                UserProfileCard(
+                    name = state.userName,
+                    expCurrent = state.expCurrent,
+                    expMax = state.expMax,
+                    level = state.level,
+                    modifier = Modifier.padding(top = 16.dp),
+                    onClick = { onIntent(HomeIntent.OnProfileClick) }
                 )
 
-                // Banner de Desafíos
-                ChallengeBanner()
+                // Espacio flexible
+                Spacer(modifier = Modifier.weight(1f))
+
+                // CONTENIDO INFERIOR
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    // Icono Guía
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        FloatingGuideButton(onClick = { onIntent(HomeIntent.OnGuideClick) })
+                    }
+
+                    // Botón central "INICIAR"
+                    CustomStartButton(
+                        text = "INICIAR",
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                PrimaryBlue,
+                                PrimaryBlueDark
+                            )
+                        ),
+                        onClick = { onIntent(HomeIntent.OnStartClick) }
+                    )
+
+                    // Banner de Desafíos
+                    ChallengeBanner()
+                }
             }
         }
     }

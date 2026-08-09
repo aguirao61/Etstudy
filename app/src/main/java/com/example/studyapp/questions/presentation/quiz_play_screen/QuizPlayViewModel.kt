@@ -3,7 +3,12 @@ package com.example.studyapp.questions.presentation.quiz_play_screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.studyapp.questions.domain.Question
+import com.example.studyapp.questions.domain.models.Attempt
+import com.example.studyapp.questions.domain.models.AttemptQuestion
+import com.example.studyapp.questions.domain.repositories.SubjectRepository
+import com.example.studyapp.questions.domain.SubjectFlow
+import com.example.studyapp.user_profile.domain.use_cases.ExperienceResult
+import com.example.studyapp.user_profile.domain.use_cases.ProcessQuizResultsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,7 +19,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class QuizPlayViewModel(
-    savedStateHandle: SavedStateHandle
+    private val subjectRepository: SubjectRepository,
+    private val processQuizResultsUseCase: ProcessQuizResultsUseCase,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(QuizPlayState())
@@ -24,33 +31,40 @@ class QuizPlayViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
+        val userId = savedStateHandle.get<Int>("userId") ?: 0
+        val subjectId = savedStateHandle.get<Int>("subjectId") ?: 0
+        val moduleId = savedStateHandle.get<Int>("moduleId") ?: 0
         val count = savedStateHandle.get<Int>("count") ?: 10
         val immediate = savedStateHandle.get<Boolean>("immediate") ?: false
-        val topicIndex = savedStateHandle.get<Int>("topicIndex") ?: 0
+        val isRandom = savedStateHandle.get<Boolean>("isRandom") ?: false
+        val flowName = savedStateHandle.get<String>("flowType") ?: SubjectFlow.TEST.name
+        val flow = try { SubjectFlow.valueOf(flowName) } catch (_: Exception) { SubjectFlow.TEST }
         
-        val topicLabel = when(topicIndex) {
-            1 -> "T1"
-            2 -> "T2"
-            3 -> "T3"
-            4 -> "T4"
-            else -> "Mix"
-        }
+        _state.update { it.copy(immediateCorrection = immediate) }
 
-        // Mock data
-        val mockQuestions = List(count) { i ->
-            Question(
-                id = i,
-                text = "En fatiga, la longitud crítica de grieta se puede determinar a partir de la tenacidad de fractura del material",
-                options = listOf("Verdadero", "Falso"),
-                correctAnswerIndex = 0,
-                topicLabel = topicLabel
-            )
-        }
+        viewModelScope.launch {
+            val questions = when (flow) {
+                SubjectFlow.ERROR_TEST -> {
+                    if (moduleId == 0) {
+                        subjectRepository.getFailedQuestionsForCourse(userId, subjectId, count, isRandom)
+                    } else {
+                        subjectRepository.getFailedQuestionsForModule(userId, moduleId, count, isRandom)
+                    }
+                }
+                else -> {
+                    if (moduleId == 0) {
+                        subjectRepository.getQuestionsForCourse(subjectId, count, isRandom)
+                    } else {
+                        subjectRepository.getQuestionsForModule(moduleId, count, isRandom)
+                    }
+                }
+            }
 
-        _state.update { it.copy(
-            questions = mockQuestions,
-            immediateCorrection = immediate
-        ) }
+            _state.update { it.copy(
+                questions = questions,
+                isLoading = false
+            ) }
+        }
     }
 
     fun onIntent(intent: QuizPlayIntent) {
@@ -60,70 +74,149 @@ class QuizPlayViewModel(
             QuizPlayIntent.OnBackClick -> moveToPrevious()
             QuizPlayIntent.OnCloseClick -> { /* Handle close effect if needed */ }
             is QuizPlayIntent.OnQuestionJump -> jumpToQuestion(intent.index)
+            QuizPlayIntent.OnValidateClick -> validateCurrentQuestion()
         }
     }
 
     private fun handleOptionSelect(index: Int) {
         if (_state.value.isCorrected) return
         
-        _state.update { it.copy(
-            selectedOptionIndex = index,
-            userAnswers = it.userAnswers + (it.currentIndex to index)
-        ) }
-
-        if (_state.value.immediateCorrection) {
-            // Validate immediately
-            val isCorrect = index == _state.value.currentQuestion?.correctAnswerIndex
+        val currentQuestion = _state.value.currentQuestion ?: return
+        
+        if (currentQuestion.isMultiSelect) {
             _state.update { 
-                it.copy(
-                    isCorrected = true,
-                    score = if (isCorrect) it.score + 1 else it.score - 1
-                ) 
-            }
-            
-            // Auto advance after 500ms (only if NOT the last question)
-            if (_state.value.currentIndex < _state.value.questions.size - 1) {
-                viewModelScope.launch {
-                    delay(500)
-                    moveToNext()
+                val currentSelection = it.selectedOptionIndices
+                val newSelection = if (currentSelection.contains(index)) {
+                    currentSelection - index
+                } else {
+                    currentSelection + index
                 }
+                it.copy(
+                    selectedOptionIndices = newSelection,
+                    userAnswers = it.userAnswers + (it.currentIndex to newSelection)
+                )
             }
+        } else {
+            val newSelection = setOf(index)
+            _state.update { it.copy(
+                selectedOptionIndices = newSelection,
+                userAnswers = it.userAnswers + (it.currentIndex to newSelection)
+            ) }
+
+            // En modo corrección inmediata, para selección única validamos al elegir?
+            // El usuario dijo: "Las respuestas se deben validar al pulsar siguiente... cambia el boton de siguiente por el de validar"
+            // Así que para selección única también esperamos a pulsar el botón (ahora Validar).
+        }
+    }
+
+    private fun validateCurrentQuestion() {
+        val s = _state.value
+        val currentQuestion = s.currentQuestion ?: return
+        if (s.isCorrected) return
+
+        val isCorrect = s.selectedOptionIndices == currentQuestion.correctAnswerIndices.toSet()
+        _state.update { 
+            it.copy(
+                isCorrected = true,
+                validatedIndices = it.validatedIndices + it.currentIndex,
+                score = if (isCorrect) it.score + 1 else it.score
+            ) 
         }
     }
 
     private fun moveToNext() {
         val s = _state.value
+        
+        // Si estamos en corrección inmediata y NO está corregida aún, VALIDAMOS en lugar de pasar
+        if (s.immediateCorrection && !s.isCorrected) {
+            validateCurrentQuestion()
+            return
+        }
+
         if (s.currentIndex < s.questions.size - 1) {
             val nextIndex = s.currentIndex + 1
-            // Update score if not immediate (manual validation on next)
-            val updatedScore = if (!s.immediateCorrection && s.selectedOptionIndex != null) {
-                val isCorrect = s.selectedOptionIndex == s.currentQuestion?.correctAnswerIndex
-                if (isCorrect) s.score + 1 else s.score - 1
-            } else s.score
+            
+            // Si no hay corrección inmediata, validamos al pasar (solo si se ha seleccionado algo)
+            var updatedScore = s.score
+            if (!s.immediateCorrection && !s.isCorrected && s.selectedOptionIndices.isNotEmpty()) {
+                val isCorrect = s.selectedOptionIndices == s.currentQuestion?.correctAnswerIndices?.toSet()
+                updatedScore = if (isCorrect) s.score + 1 else s.score
+            }
 
             _state.update { it.copy(
                 currentIndex = nextIndex,
-                selectedOptionIndex = it.userAnswers[nextIndex],
-                isCorrected = it.immediateCorrection && it.userAnswers.containsKey(nextIndex),
+                selectedOptionIndices = it.userAnswers[nextIndex] ?: emptySet(),
+                isCorrected = it.immediateCorrection && it.validatedIndices.contains(nextIndex),
                 score = updatedScore
             ) }
         } else {
-            // Finish
-             val finalScore = if (!s.immediateCorrection && s.selectedOptionIndex != null) {
-                val isCorrect = s.selectedOptionIndex == s.currentQuestion?.correctAnswerIndex
-                if (isCorrect) s.score + 1 else s.score - 1
-            } else s.score
+            // Finalizar
+            var finalScore = s.score
+            if (!s.immediateCorrection && !s.isCorrected && s.selectedOptionIndices.isNotEmpty()) {
+                val isCorrect = s.selectedOptionIndices == s.currentQuestion?.correctAnswerIndices?.toSet()
+                finalScore = if (isCorrect) s.score + 1 else s.score
+            }
 
             _state.update { it.copy(isFinished = true, score = finalScore) }
-            viewModelScope.launch {
-                _effect.send(QuizPlayEffect.NavigateToResults(finalScore, s.questions.size))
-            }
-        }
-    }
+            
+            val userId = savedStateHandle.get<Int>("userId") ?: 0
+            val subjectId = savedStateHandle.get<Int>("subjectId") ?: 0
+            val flowName = savedStateHandle.get<String>("flowType") ?: SubjectFlow.TEST.name
+            val flow = try { SubjectFlow.valueOf(flowName) } catch (_: Exception) { SubjectFlow.TEST }
 
-    private fun sendEffect(effect: QuizPlayEffect) {
-        viewModelScope.launch {
-            _effect.send(effect)
+            viewModelScope.launch {
+                val attemptQuestions = s.questions.mapIndexed { index, question ->
+                    val userSelection = s.userAnswers[index] ?: emptySet()
+                    val wasValidated = if (s.immediateCorrection) s.validatedIndices.contains(index) else true
+                    
+                    val isCorrect = wasValidated && userSelection == question.correctAnswerIndices.toSet()
+                    val isBlank = userSelection.isEmpty()
+                    
+                    val points = if (isCorrect) 1 
+                                 else if (isBlank || !wasValidated) 0 
+                                 else -1
+
+                    AttemptQuestion(
+                        questionId = question.id,
+                        questionText = question.text,
+                        userAnswers = userSelection,
+                        correctAnswers = question.correctAnswerIndices,
+                        options = question.options,
+                        isCorrect = isCorrect,
+                        points = points
+                    )
+                }
+
+                val failedIds = attemptQuestions.filter { it.points == -1 }.map { it.questionId }
+                val correctIds = attemptQuestions.filter { it.points == 1 }.map { it.questionId }
+
+                val result = processQuizResultsUseCase(
+                    userId = userId,
+                    subjectId = subjectId,
+                    totalQuestions = s.questions.size,
+                    correctAnswers = finalScore,
+                    failedQuestionIds = failedIds,
+                    correctQuestionIds = correctIds,
+                    isErrorTest = flow == SubjectFlow.ERROR_TEST
+                )
+
+                if (result is ExperienceResult.Success) {
+                    val attempt = Attempt(
+                        totalQuestions = s.questions.size,
+                        score = finalScore,
+                        correctCount = finalScore,
+                        incorrectCount = attemptQuestions.count { it.points == -1 },
+                        blankCount = attemptQuestions.count { it.points == 0 },
+                        xpGained = result.xpGained,
+                        studyPointsGained = result.studyPointsGained,
+                        previousLevel = result.previousLevel,
+                        newLevel = result.newLevel,
+                        questions = attemptQuestions
+                    )
+                    
+                    _effect.send(QuizPlayEffect.NavigateToResults(attempt))
+                }
+            }
         }
     }
 
@@ -132,8 +225,8 @@ class QuizPlayViewModel(
             val prevIndex = _state.value.currentIndex - 1
             _state.update { it.copy(
                 currentIndex = prevIndex,
-                selectedOptionIndex = it.userAnswers[prevIndex],
-                isCorrected = it.immediateCorrection && it.userAnswers.containsKey(prevIndex)
+                selectedOptionIndices = it.userAnswers[prevIndex] ?: emptySet(),
+                isCorrected = it.immediateCorrection && it.validatedIndices.contains(prevIndex)
             ) }
         }
     }
@@ -142,8 +235,8 @@ class QuizPlayViewModel(
         if (index in _state.value.questions.indices) {
             _state.update { it.copy(
                 currentIndex = index,
-                selectedOptionIndex = it.userAnswers[index],
-                isCorrected = it.immediateCorrection && it.userAnswers.containsKey(index)
+                selectedOptionIndices = it.userAnswers[index] ?: emptySet(),
+                isCorrected = it.immediateCorrection && it.validatedIndices.contains(index)
             ) }
         }
     }

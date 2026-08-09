@@ -1,6 +1,6 @@
 package com.example.studyapp.questions.presentation.subject_screen
 
-import com.example.studyapp.questions.domain.Subject
+import com.example.studyapp.questions.domain.models.Subject
 
 sealed class SubjectsIntent {
     data class Initialize(val flowType: String) : SubjectsIntent()

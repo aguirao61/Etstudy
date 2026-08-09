@@ -1,8 +1,10 @@
 package com.example.studyapp.core.presentation.home_screen
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyapp.questions.domain.SubjectFlow
+import com.example.studyapp.user_profile.domain.repositories.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +13,10 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val userRepository: UserRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
@@ -20,13 +25,24 @@ class HomeViewModel : ViewModel() {
     val effect = _effect.receiveAsFlow()
 
     init {
-        _state.update {
-            it.copy(
-                userName = "Usuario123",
-                expCurrent = 370342,
-                expMax = 400000,
-                level = 363
-            )
+        val userId = savedStateHandle.get<Int>("userId") ?: 0
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            userRepository.getUserFlow(userId).collect { user ->
+                if (user != null) {
+                    _state.update {
+                        it.copy(
+                            userName = user.username,
+                            expCurrent = user.experience,
+                            expMax = user.maxExperience,
+                            level = user.level,
+                            isLoading = false
+                        )
+                    }
+                } else {
+                    _state.update { it.copy(isLoading = false) }
+                }
+            }
         }
     }
 

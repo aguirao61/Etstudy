@@ -78,4 +78,10 @@ object StudyTheme {
     // Adaptativos manuales
     val topicPillBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF1E293B) else Color(0xFFDBEAFE)
     val topicPillText @Composable get() = if (isSystemInDarkTheme()) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
+
+    // Colores de éxito/error suavizados para modo oscuro
+    val success @Composable get() = if (isSystemInDarkTheme()) Color(0xFF4ADE80) else SuccessGreen
+    val error @Composable get() = if (isSystemInDarkTheme()) Color(0xFFF87171) else ErrorRed
+    val successBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF064E3B).copy(alpha = 0.4f) else LightSuccessGreen
+    val errorBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF450A0A).copy(alpha = 0.4f) else LightErrorRed
 }

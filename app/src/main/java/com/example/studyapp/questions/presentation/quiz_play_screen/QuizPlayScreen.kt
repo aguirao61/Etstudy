@@ -24,12 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyapp.core.presentation.ui.theme.*
+import com.example.studyapp.questions.domain.models.Attempt
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 fun QuizPlayScreen(
     viewModel: QuizPlayViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onNavigateToResults: (score: Int, total: Int) -> Unit = { _, _ -> }
+    onNavigateToResults: (Attempt) -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -47,13 +47,20 @@ fun QuizPlayScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is QuizPlayEffect.NavigateToResults -> {
-                    onNavigateToResults(effect.score, effect.total)
+                    onNavigateToResults(effect.attempt)
                 }
             }
         }
     }
 
     if (state.isFinished) {
+        return
+    }
+
+    if (state.isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = PrimaryBlue)
+        }
         return
     }
 
@@ -68,8 +75,9 @@ fun QuizPlayScreen(
                     questionsCount = state.questions.size,
                     currentIndex = state.currentIndex,
                     userAnswers = state.userAnswers,
-                    correctAnswers = state.questions.map { it.correctAnswerIndex },
+                    correctAnswers = state.questions.map { it.correctAnswerIndices },
                     immediateCorrection = state.immediateCorrection,
+                    validatedIndices = state.validatedIndices,
                     onQuestionClick = {
                         viewModel.onIntent(QuizPlayIntent.OnQuestionJump(it))
                         scope.launch { drawerState.close() }
@@ -97,7 +105,7 @@ fun QuizPlayScreen(
                             if (state.immediateCorrection) {
                                 Text(
                                     text = "${state.score} pts",
-                                    color = if (state.score >= 0) SuccessGreen else ErrorRed,
+                                    color = if (state.score >= 0) StudyTheme.success else StudyTheme.error,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
@@ -110,12 +118,19 @@ fun QuizPlayScreen(
                 )
             },
             bottomBar = {
+                val isLast = state.currentIndex == state.questions.size - 1
+                val showValidate = state.immediateCorrection && !state.isCorrected
+                
                 QuizBottomBar(
                     canGoBack = state.currentIndex > 0,
                     onBack = { viewModel.onIntent(QuizPlayIntent.OnBackClick) },
                     onNext = { viewModel.onIntent(QuizPlayIntent.OnNextClick) },
-                    showNext = true, // Siempre mostramos siguiente/finalizar
-                    nextButtonText = if (state.currentIndex == state.questions.size - 1) "Finalizar" else "Siguiente"
+                    showNext = true,
+                    nextButtonText = when {
+                        showValidate -> "Validar"
+                        isLast -> "Finalizar"
+                        else -> "Siguiente"
+                    }
                 )
             },
             containerColor = StudyTheme.surfaceBg
@@ -139,7 +154,7 @@ fun QuizPlayScreen(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = question.topicLabel,
+                            text = question.topicLabel.ifEmpty { "Pregunta" },
                             color = StudyTheme.topicPillText,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -153,7 +168,18 @@ fun QuizPlayScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                if (question.isMultiSelect) {
+                    Text(
+                        text = "Selección múltiple",
+                        color = PrimaryBlue,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Question Text
                 Text(
@@ -164,45 +190,48 @@ fun QuizPlayScreen(
                     lineHeight = 26.sp
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 // Options
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.weight(1f)) {
                     question.options.forEachIndexed { index, option ->
+                        val isSelected = state.selectedOptionIndices.contains(index)
                         val isCorrect = if (state.isCorrected) {
-                            if (index == question.correctAnswerIndex) true
-                            else if (index == state.selectedOptionIndex) false
-                            else null
+                            question.correctAnswerIndices.contains(index)
                         } else null
 
                         QuizOptionItem(
                             text = option,
-                            isSelected = state.selectedOptionIndex == index,
+                            isSelected = isSelected,
                             isCorrect = isCorrect,
                             immediateCorrection = state.immediateCorrection,
+                            enabled = !state.isCorrected,
                             onClick = { viewModel.onIntent(QuizPlayIntent.OnOptionSelect(index)) }
                         )
                     }
                 }
 
                 if (state.isCorrected) {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    if (state.selectedOptionIndex == question.correctAnswerIndex) {
+                    val isCorrect = state.selectedOptionIndices == question.correctAnswerIndices.toSet()
+                    
+                    if (isCorrect) {
                         CorrectionBanner(
                             text = "¡Correcta! (+1)",
                             icon = Icons.Default.CheckCircle,
-                            color = SuccessGreen,
-                            bgColor = LightSuccessGreen
+                            color = StudyTheme.success,
+                            bgColor = StudyTheme.successBg
                         )
                     } else {
+                        val correctTexts = question.correctAnswerIndices.joinToString(", ") { question.options[it] }
                         CorrectionBanner(
                             text = "Incorrecta (-1)",
                             icon = Icons.Default.Cancel,
-                            color = ErrorRed,
-                            bgColor = LightErrorRed,
-                            extraText = "Respuesta: ${question.options[question.correctAnswerIndex]}"
+                            color = StudyTheme.error,
+                            bgColor = StudyTheme.errorBg,
+                            extraText = "Respuesta: $correctTexts"
                         )
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -240,13 +269,13 @@ fun CorrectionBanner(
                     fontSize = 14.sp,
                     color = StudyTheme.textMain
                 )
-            }
-            extraText?.let {
-                Text(
-                    text = it,
-                    fontSize = 12.sp,
-                    color = StudyTheme.textSub
-                )
+                extraText?.let {
+                    Text(
+                        text = it,
+                        fontSize = 12.sp,
+                        color = StudyTheme.textSub
+                    )
+                }
             }
         }
     }
@@ -258,20 +287,21 @@ fun QuizOptionItem(
     isSelected: Boolean,
     isCorrect: Boolean?, 
     immediateCorrection: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     val borderColor by animateColorAsState(
         targetValue = when {
-            isCorrect == true -> SuccessGreen
-            isCorrect == false && isSelected -> ErrorRed
+            isCorrect == true && immediateCorrection -> StudyTheme.success
+            isCorrect == false && isSelected && immediateCorrection -> StudyTheme.error
             isSelected && !immediateCorrection -> StudyTheme.textMain
             else -> StudyTheme.cardBorder
         }, label = "border"
     )
 
     val bgColor = when {
-        isCorrect == true -> LightSuccessGreen
-        isCorrect == false && isSelected -> LightErrorRed
+        isCorrect == true && immediateCorrection -> StudyTheme.successBg
+        isCorrect == false && isSelected && immediateCorrection -> StudyTheme.errorBg
         isSelected && !immediateCorrection -> LevelColor
         else -> StudyTheme.cardBg
     }
@@ -284,12 +314,12 @@ fun QuizOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .border(
-                width = if (isSelected || isCorrect != null) 1.5.dp else 1.dp,
+                width = if (isSelected) 1.5.dp else 1.dp,
                 color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             )
             .clip(RoundedCornerShape(12.dp))
-            .clickable(enabled = isCorrect == null) { onClick() },
+            .clickable(enabled = enabled) { onClick() },
         colors = CardDefaults.cardColors(containerColor = bgColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
@@ -305,14 +335,14 @@ fun QuizOptionItem(
             Box(
                 modifier = Modifier
                     .size(20.dp)
-                    .border(2.dp, radioColor, CircleShape),
+                    .border(2.dp, radioColor, RoundedCornerShape(4.dp)), // Cuadrado para multi-select?
                 contentAlignment = Alignment.Center
             ) {
                 if (isSelected) {
                     Box(
                         modifier = Modifier
                             .size(10.dp)
-                            .clip(CircleShape)
+                            .clip(RoundedCornerShape(2.dp))
                             .background(radioColor)
                     )
                 }
@@ -328,10 +358,10 @@ fun QuizOptionItem(
                 modifier = Modifier.weight(1f)
             )
 
-            if (isCorrect == true) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = SuccessGreen, modifier = Modifier.size(20.dp))
-            } else if (isCorrect == false && isSelected) {
-                Icon(Icons.Default.Close, contentDescription = null, tint = ErrorRed, modifier = Modifier.size(20.dp))
+            if (isCorrect == true && immediateCorrection) {
+                Icon(Icons.Default.Check, contentDescription = null, tint = StudyTheme.success, modifier = Modifier.size(20.dp))
+            } else if (isCorrect == false && isSelected && immediateCorrection) {
+                Icon(Icons.Default.Close, contentDescription = null, tint = StudyTheme.error, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -341,9 +371,10 @@ fun QuizOptionItem(
 fun QuizSummaryDrawerContent(
     questionsCount: Int,
     currentIndex: Int,
-    userAnswers: Map<Int, Int>,
-    correctAnswers: List<Int>,
+    userAnswers: Map<Int, Set<Int>>,
+    correctAnswers: List<List<Int>>,
     immediateCorrection: Boolean,
+    validatedIndices: Set<Int>,
     onQuestionClick: (Int) -> Unit
 ) {
     Column(
@@ -366,12 +397,17 @@ fun QuizSummaryDrawerContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(questionsCount) { index ->
-                val isAnswered = userAnswers.containsKey(index)
+                val isAnswered = userAnswers.containsKey(index) && userAnswers[index]?.isNotEmpty() == true
                 val isCurrent = index == currentIndex
                 
                 val boxColor = when {
                     immediateCorrection && isAnswered -> {
-                        if (userAnswers[index] == correctAnswers[index]) SuccessGreen else ErrorRed
+                        if (validatedIndices.contains(index)) {
+                            val isCorrect = userAnswers[index] == correctAnswers[index].toSet()
+                            if (isCorrect) StudyTheme.success else StudyTheme.error
+                        } else {
+                            StudyTheme.cardBorder
+                        }
                     }
                     !immediateCorrection && isAnswered -> LevelColor
                     else -> StudyTheme.cardBorder
@@ -392,7 +428,7 @@ fun QuizSummaryDrawerContent(
                 ) {
                     Text(
                         text = (index + 1).toString(),
-                        color = if (isAnswered) Color.White else StudyTheme.textMain,
+                        color = if (isAnswered && (!immediateCorrection || validatedIndices.contains(index))) Color.White else StudyTheme.textMain,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )

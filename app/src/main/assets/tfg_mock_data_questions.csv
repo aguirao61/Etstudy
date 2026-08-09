@@ -1,0 +1,6 @@
+questionId,questionText
+1,¿Cuáles de los siguientes modos de apertura en fopen() permiten escribir datos dentro de un archivo?
+2,¿Qué funciones se pueden utilizar para leer datos desde un archivo de texto en C?
+3,"Sobre la función fclose(), ¿cuáles de las siguientes afirmaciones son verdaderas?"
+4,¿Cuáles de las siguientes opciones son válidas para posicionar o consultar el puntero interno dentro de un archivo?
+5,"¿Qué sucede si intentas abrir un archivo inexistente utilizando el modo ""r"" mediante fopen(""datos.txt"", ""r"")?"

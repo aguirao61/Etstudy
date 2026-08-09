@@ -3,18 +3,23 @@ package com.example.studyapp.questions.presentation.subject_screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.studyapp.questions.domain.Subject
+import com.example.studyapp.questions.domain.models.Subject
 import com.example.studyapp.questions.domain.SubjectFlow
+import com.example.studyapp.questions.domain.repositories.SubjectRepository
+import com.example.studyapp.user_profile.domain.repositories.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SubjectsViewModel(
-    savedStateHandle: SavedStateHandle
+    private val subjectRepository: SubjectRepository,
+    private val userRepository: UserRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SubjectsState())
@@ -24,6 +29,8 @@ class SubjectsViewModel(
     val effect = _effect.receiveAsFlow()
 
     init {
+        val userId = savedStateHandle.get<Int>("userId") ?: 0
+
         // Recuperar el modo de la navegación
         val flowName = savedStateHandle.get<String>("flowType") ?: SubjectFlow.BROWSE.name
         val flow = try {
@@ -32,24 +39,32 @@ class SubjectsViewModel(
             SubjectFlow.BROWSE
         }
 
-        // Mock data
-        val initialSubjects = listOf(
-            Subject(1, "Matemáticas Discretas", "MAT-101"),
-            Subject(2, "Estructuras de Datos", "INF-201", isFavorite = true),
-            Subject(3, "Bases de Datos", "INF-202"),
-            Subject(4, "Física General", "FIS-101"),
-            Subject(5, "Programación Orientada a Objetos", "INF-102", isFavorite = true),
-            Subject(6, "Cálculo Integral", "MAT-102"),
-            Subject(7, "Sistemas Operativos", "INF-301"),
-            Subject(8, "Ingeniería de Software", "INF-302")
-        )
-        _state.update {
-            it.copy(
-                subjects = initialSubjects,
-                flowType = flow
-            )
+        _state.update { it.copy(flowType = flow, isLoading = true) }
+
+        // Carga reactiva de asignaturas
+        viewModelScope.launch {
+            subjectRepository.getSubjects(userId).collectLatest { subjects ->
+                val uniqueSubjects = subjects.distinctBy { it.id }
+                _state.update { it.copy(subjects = uniqueSubjects, isLoading = false) }
+                applyFilters()
+            }
         }
-        applyFilters()
+
+        // Carga reactiva del perfil de usuario
+        viewModelScope.launch {
+            userRepository.getUserFlow(userId).collectLatest { user ->
+                if (user != null) {
+                    _state.update {
+                        it.copy(
+                            userName = user.username,
+                            level = user.level,
+                            expCurrent = user.experience,
+                            expMax = user.maxExperience
+                        )
+                    }
+                }
+            }
+        }
     }
 
     fun onIntent(intent: SubjectsIntent) {
@@ -91,8 +106,9 @@ class SubjectsViewModel(
     private fun applyFilters() {
         _state.update { currentState ->
             val query = currentState.searchQuery
-            val allFiltered = currentState.subjects.filter { 
-                it.name.contains(query, true) || it.code.contains(query, true) 
+            
+            val allFiltered = currentState.subjects.filter { subject ->
+                subject.name.contains(query, true) || subject.code.contains(query, true)
             }
             val favsFiltered = allFiltered.filter { it.isFavorite }
             
@@ -104,13 +120,10 @@ class SubjectsViewModel(
     }
 
     private fun toggleFavorite(subject: Subject) {
-        _state.update { currentState ->
-            val updated = currentState.subjects.map {
-                if (it.id == subject.id) it.copy(isFavorite = !it.isFavorite) else it
-            }
-            currentState.copy(subjects = updated)
+        val userId = savedStateHandle.get<Int>("userId") ?: 0
+        viewModelScope.launch {
+            subjectRepository.toggleFavorite(userId, subject.id)
         }
-        applyFilters()
     }
 
     private fun sendEffect(effect: SubjectsEffect) {

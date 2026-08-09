@@ -37,7 +37,7 @@ fun QuizConfigScreen(
     flowType: String,
     viewModel: QuizConfigViewModel = viewModel(),
     onBackClick: () -> Unit = {},
-    onStartTest: (subjectId: Int, topicIndex: Int, questionsCount: Int, isRandom: Boolean, isTimerEnabled: Boolean, immediateCorrection: Boolean) -> Unit = { _, _, _, _, _, _ -> }
+    onStartTest: (subjectId: Int, topicIndex: Int, questionsCount: Int, isRandom: Boolean, isTimerEnabled: Boolean, immediateCorrection: Boolean, flowType: String) -> Unit = { _, _, _, _, _, _, _ -> }
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     
@@ -55,11 +55,12 @@ fun QuizConfigScreen(
                 is QuizConfigEffect.StartQuiz -> {
                     currentOnStartTest(
                         effect.subjectId,
-                        effect.topicIndex,
+                        effect.moduleId,
                         effect.questionCount,
                         effect.isRandom,
                         effect.isTimerEnabled,
-                        effect.immediateCorrection
+                        effect.immediateCorrection,
+                        effect.flowType
                     )
                 }
             }
@@ -168,8 +169,10 @@ fun QuizConfigScreenContent(
                                 text = topicName,
                                 fontSize = 14.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) PrimaryBlue else StudyTheme.textMain
+                                color = if (isSelected) PrimaryBlue else StudyTheme.textMain,
+                                modifier = Modifier.weight(1f)
                             )
+                            Spacer(modifier = Modifier.width(12.dp))
                             Surface(
                                 color = if (isSelected) PrimaryBlue else Color(0xFFCBD5E1),
                                 shape = RoundedCornerShape(12.dp)
@@ -360,8 +363,13 @@ fun QuizConfigScreenContent(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
-            ) {
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PrimaryBlue,
+                    disabledContainerColor = StudyTheme.cardBorder
+                ),
+                enabled = state.selectedTopicQuestionsCount > 0 && state.questionCount > 0
+            )
+ {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
