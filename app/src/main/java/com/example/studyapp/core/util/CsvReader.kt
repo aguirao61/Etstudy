@@ -2,6 +2,7 @@ package com.example.studyapp.core.util
 
 import android.content.Context
 import com.example.studyapp.user_profile.data.tables.banner_table.BannerLocalEntity
+import com.example.studyapp.user_profile.data.tables.icon_table.IconLocalEntity
 import com.example.studyapp.questions.data.tables.courses_table.CourseLocalEntity
 import com.example.studyapp.questions.data.tables.questions_table.QuestionLocalEntity
 import com.example.studyapp.questions.data.tables.answers_table.AnswersLocalEntity
@@ -23,6 +24,19 @@ class CsvReader(private val context: Context) {
                 bannerColour = map["bannerColour"]?.parseColor() ?: 0L,
                 bannerTextColour = map["bannerTextColour"]?.parseColor() ?: 0L,
                 bannerIcon = map["bannerIcon"] ?: ""
+            )
+        }
+    }
+
+    /**
+     * Reads icons from tfg_mock_data_icons_v1.csv
+     */
+    fun readIcons(): List<IconLocalEntity> {
+        return readFromAssets("tfg_mock_data_icons_v1.csv") { map ->
+            IconLocalEntity(
+                iconName = map["iconName"] ?: "",
+                iconDescription = map["iconDescription"] ?: "",
+                iconImage = map["iconAppImageIdentifier"] ?: ""
             )
         }
     }
@@ -53,10 +67,10 @@ class CsvReader(private val context: Context) {
     }
 
     /**
-     * Reads questions from tfg_mock_data_questionsv2.csv
+     * Reads questions from tfg_mock_data_questions_v3.csv
      */
     fun readQuestions(): List<QuestionLocalEntity> {
-        return readFromAssets("tfg_mock_data_questions_v2.csv") { map ->
+        return readFromAssets("tfg_mock_data_questions_v3.csv") { map ->
             QuestionLocalEntity(
                 uniqueQuestionId = map["questionId"]?.toIntOrNull() ?: 0,
                 questionText = map["questionText"] ?: ""
@@ -65,10 +79,10 @@ class CsvReader(private val context: Context) {
     }
 
     /**
-     * Reads answers from tfg_mock_data_answersv2.csv
+     * Reads answers from tfg_mock_data_answers_v3.csv
      */
     fun readAnswers(): List<AnswersLocalEntity> {
-        return readFromAssets("tfg_mock_data_answers_v2.csv") { map ->
+        return readFromAssets("tfg_mock_data_answers_v3.csv") { map ->
             AnswersLocalEntity(
                 uniqueQuestionId = map["uniqueQuestionId"]?.toIntOrNull() ?: 0,
                 answerText = map["answerText"] ?: "",
@@ -78,10 +92,10 @@ class CsvReader(private val context: Context) {
     }
 
     /**
-     * Reads relations from tfg_mock_data_relationship_questions_modules_v2.csv
+     * Reads relations from tfg_mock_data_relationship_questions_modules_v3.csv
      */
     fun readQuestionModuleRelations(): List<RelationModuleQuestionLocalEntity> {
-        return readFromAssets("tfg_mock_data_relationship_questions_modules_v2.csv") { map ->
+        return readFromAssets("tfg_mock_data_relationship_questions_modules_v3.csv") { map ->
             RelationModuleQuestionLocalEntity(
                 uniqueModuleId = map["uniqueModuleId"]?.toIntOrNull() ?: 0,
                 uniqueQuestionId = map["uniqueQuestionId"]?.toIntOrNull() ?: 0

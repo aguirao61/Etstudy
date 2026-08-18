@@ -3,12 +3,12 @@ package com.example.studyapp.questions.presentation.quiz_play_screen
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.studyapp.core.domain.GameEngine
+import com.example.studyapp.core.domain.GameResult
 import com.example.studyapp.questions.domain.models.Attempt
 import com.example.studyapp.questions.domain.models.AttemptQuestion
 import com.example.studyapp.questions.domain.repositories.SubjectRepository
 import com.example.studyapp.questions.domain.SubjectFlow
-import com.example.studyapp.user_profile.domain.use_cases.ExperienceResult
-import com.example.studyapp.user_profile.domain.use_cases.ProcessQuizResultsUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 class QuizPlayViewModel(
     private val subjectRepository: SubjectRepository,
-    private val processQuizResultsUseCase: ProcessQuizResultsUseCase,
+    private val gameEngine: GameEngine,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -190,7 +190,7 @@ class QuizPlayViewModel(
                 val failedIds = attemptQuestions.filter { it.points == -1 }.map { it.questionId }
                 val correctIds = attemptQuestions.filter { it.points == 1 }.map { it.questionId }
 
-                val result = processQuizResultsUseCase(
+                val result = gameEngine.processQuizResults(
                     userId = userId,
                     subjectId = subjectId,
                     totalQuestions = s.questions.size,
@@ -200,7 +200,7 @@ class QuizPlayViewModel(
                     isErrorTest = flow == SubjectFlow.ERROR_TEST
                 )
 
-                if (result is ExperienceResult.Success) {
+                if (result is GameResult.Success) {
                     val attempt = Attempt(
                         totalQuestions = s.questions.size,
                         score = finalScore,

@@ -43,5 +43,6 @@ data class UserLocalEntity(
     val completedCourses: Int,
     // Tipos nullable (Int?) para poder inicializar la cuenta sin ningún cosmético equipado
     val equippedIconId: Int? = null,
-    val equippedBannerId: Int? = null
+    val equippedBannerId: Int? = null,
+    val selectedTheme: String = "SYSTEM"
 )

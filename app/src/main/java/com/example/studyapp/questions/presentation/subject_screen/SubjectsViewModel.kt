@@ -59,7 +59,8 @@ class SubjectsViewModel(
                             userName = user.username,
                             level = user.level,
                             expCurrent = user.experience,
-                            expMax = user.maxExperience
+                            expMax = user.maxExperience,
+                            equippedIconUrl = user.equippedIconUrl
                         )
                     }
                 }
@@ -88,9 +89,7 @@ class SubjectsViewModel(
                 toggleFavorite(intent.subject)
             }
             is SubjectsIntent.OnSubjectClick -> {
-                if (_state.value.flowType == SubjectFlow.BROWSE) {
-                    sendEffect(SubjectsEffect.ShowToast("Asignatura: ${intent.subject.name}"))
-                } else {
+                if (_state.value.flowType != SubjectFlow.BROWSE) {
                     sendEffect(SubjectsEffect.NavigateToQuizConfig(intent.subject))
                 }
             }

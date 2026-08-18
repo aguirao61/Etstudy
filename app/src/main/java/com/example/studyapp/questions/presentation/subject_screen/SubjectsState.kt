@@ -13,6 +13,7 @@ data class SubjectsState(
     val level: Int = 1,
     val expCurrent: Int = 0,
     val expMax: Int = 100,
+    val equippedIconUrl: String? = null,
     val isLoading: Boolean = false,
     val flowType: SubjectFlow = SubjectFlow.BROWSE
 )

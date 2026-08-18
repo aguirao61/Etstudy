@@ -1,9 +1,13 @@
 package com.example.studyapp.user_profile.data.mappers
 
 import com.example.studyapp.user_profile.data.tables.banner_table.BannerLocalEntity
+import com.example.studyapp.user_profile.data.tables.icon_table.IconLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_banner_table.UserBannerDisplay
+import com.example.studyapp.user_profile.data.tables.user_icon_table.UserIconDisplay
 import com.example.studyapp.user_profile.data.tables.user_table.UserLocalEntity
 import com.example.studyapp.user_profile.domain.models.Banner
+import com.example.studyapp.user_profile.domain.models.Icon
+import com.example.studyapp.user_profile.domain.models.ThemeMode
 import com.example.studyapp.user_profile.domain.models.User
 
 fun UserLocalEntity.toDomainModel(
@@ -29,7 +33,8 @@ fun UserLocalEntity.toDomainModel(
         equippedBannerColour = bannerEntity?.bannerColour,
         equippedBannerTextColour = bannerEntity?.bannerTextColour,
         equippedBannerIcon = bannerEntity?.bannerIcon,
-        equippedBannerContent = bannerEntity?.bannerContent
+        equippedBannerContent = bannerEntity?.bannerContent,
+        selectedTheme = try { ThemeMode.valueOf(selectedTheme) } catch (e: Exception) { ThemeMode.SYSTEM }
     )
 }
 
@@ -50,7 +55,8 @@ fun User.toLocalEntity(
         completedTests = completedTests,
         completedCourses = completedCourses,
         equippedIconId = equippedIconId ?: this.equippedIconId,
-        equippedBannerId = equippedBannerId ?: this.equippedBannerId
+        equippedBannerId = equippedBannerId ?: this.equippedBannerId,
+        selectedTheme = selectedTheme.name
     )
 }
 
@@ -64,4 +70,19 @@ fun UserBannerDisplay.toDomainModel() = Banner(
     bannerPoints = bannerPoints,
     courseId = uniqueCourseId,
     isObtained = isBannerObtained ?: false
+)
+
+fun IconLocalEntity.toDomainModel() = Icon(
+    id = uniqueIconId,
+    name = iconName,
+    description = iconDescription,
+    imageUrl = iconImage
+)
+
+fun UserIconDisplay.toDomainModel() = Icon(
+    id = uniqueIconId,
+    name = iconName,
+    description = iconDescription,
+    imageUrl = iconImage,
+    isUnlocked = isUnlocked
 )

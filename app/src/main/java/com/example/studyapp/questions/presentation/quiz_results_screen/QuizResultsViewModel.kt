@@ -83,13 +83,13 @@ class QuizResultsViewModel(
             // But 'user' is already updated in DB.
             // So we start from (user.exp - attempt.xpGained) and animate to user.exp.
             // This is simplified if we don't cross multiple levels.
-            
+
             val totalGained = attempt.xpGained
             var currentAnimateExp = (user.experience - totalGained).coerceAtLeast(0)
-            
+
             // For now, let's just animate the progress value from 0 to 1 if it's simpler
             // or use the real values.
-            
+
             val steps = 50
             val expPerStep = totalGained / steps
             

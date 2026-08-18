@@ -11,6 +11,7 @@ import com.example.studyapp.user_profile.domain.models.User
 import com.example.studyapp.user_profile.domain.repositories.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 class UserProfileRepositoryImpl(
     private val userDao: UserProfileDao,
@@ -34,6 +35,12 @@ class UserProfileRepositoryImpl(
                 bannerEntity = bannerEntity,
                 dynamicCompletedCourses = completedCount
             )
+        }
+    }
+
+    override fun getAllUsers(): Flow<List<User>> {
+        return userDao.getAllUsersWithIconsFlow().map { entities ->
+            entities.map { it.user.toDomainModel(iconImage = it.equippedIconUrl) }
         }
     }
 
@@ -77,5 +84,17 @@ class UserProfileRepositoryImpl(
                 equippedBannerId = existingUser?.equippedBannerId
             )
         )
+    }
+
+    override suspend fun updateUserTheme(userId: Int, theme: String) {
+        userDao.updateUserTheme(userId, theme)
+    }
+
+    override suspend fun updateEquippedCosmetics(userId: Int, iconId: Int?, bannerId: Int?) {
+        userDao.updateEquippedCosmetics(userId, iconId, bannerId)
+    }
+
+    override suspend fun deleteUser(userId: Int) {
+        userDao.deleteUserById(userId)
     }
 }

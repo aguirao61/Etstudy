@@ -7,6 +7,7 @@ import com.example.studyapp.questions.data.tables.courses_table.CourseLocalEntit
 import com.example.studyapp.questions.data.tables.user_courses_table.UserCoursesLocalEntity
 import com.example.studyapp.questions.data.tables.user_modules_table.UserModulesLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_banner_table.UserBannerLocalEntity
+import com.example.studyapp.user_profile.data.tables.user_icon_table.UserIconLocalEntity
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -112,11 +113,42 @@ class DatabaseInitializer(
 
             val bannersInDb = database.bannerDao.getAllBanners()
 
+            // 6.1 Sincronizar Iconos
+            val iconsCsv = csvReader.readIcons()
+            val existingIcons = database.iconDao.getAllIcons()
+            
+            // Mapeo por nombre e imagen para encontrar IDs existentes
+            val nameToId = existingIcons.associate { it.iconName.trim().lowercase() to it.uniqueIconId }
+            val imageToId = existingIcons.associate { it.iconImage.trim().lowercase() to it.uniqueIconId }
+
+            val iconsToUpsert = iconsCsv.map { csv ->
+                val normName = csv.iconName.trim().lowercase()
+                val normImage = csv.iconImage.trim().lowercase()
+                val existingId = nameToId[normName] ?: imageToId[normImage]
+                
+                csv.copy(uniqueIconId = existingId ?: 0)
+            }
+            database.iconDao.upsertIcons(iconsToUpsert)
+
+            // Eliminar iconos obsoletos que ya no están en el CSV
+            val csvNames = iconsCsv.map { it.iconName.trim().lowercase() }.toSet()
+            val csvImages = iconsCsv.map { it.iconImage.trim().lowercase() }.toSet()
+            
+            val iconsToDelete = existingIcons.filter { 
+                it.iconName.trim().lowercase() !in csvNames && 
+                it.iconImage.trim().lowercase() !in csvImages 
+            }
+            if (iconsToDelete.isNotEmpty()) {
+                database.iconDao.deleteIcons(iconsToDelete)
+            }
+
+            val iconsInDb = database.iconDao.getAllIcons()
+
             // 7. ACTUALIZAR TABLAS DE USUARIO (Garantizar que todos los usuarios tienen todas las asignaturas/módulos)
             val userIds = database.userProfileDao.getAllUserIds()
             
             for (userId in userIds) {
-                initializeUserTables(userId, coursesInDb, modulesInDb, bannersInDb)
+                initializeUserTables(userId, coursesInDb, modulesInDb, bannersInDb, iconsInDb)
             }
 
             // Sincronizar IDs de asignaturas en user_banners si estaban en NULL
@@ -128,15 +160,17 @@ class DatabaseInitializer(
         val courses = database.coursesDao.getAllCourses()
         val modules = database.modulesDao.getAllModules()
         val banners = database.bannerDao.getAllBanners()
+        val icons = database.iconDao.getAllIcons()
         
-        initializeUserTables(userId, courses, modules, banners)
+        initializeUserTables(userId, courses, modules, banners, icons)
     }
 
     private suspend fun initializeUserTables(
         userId: Int,
         courses: List<CourseLocalEntity>,
         modules: List<ModuleLocalEntity>,
-        banners: List<com.example.studyapp.user_profile.data.tables.banner_table.BannerLocalEntity>
+        banners: List<com.example.studyapp.user_profile.data.tables.banner_table.BannerLocalEntity>,
+        icons: List<com.example.studyapp.user_profile.data.tables.icon_table.IconLocalEntity> = emptyList()
     ) {
         val userCourses = courses.map {
             UserCoursesLocalEntity(uniqueUserId = userId, uniqueCourseId = it.uniqueCourseId)
@@ -151,9 +185,13 @@ class DatabaseInitializer(
                 uniqueCourseId = it.uniqueCourseId
             )
         }
+        val userIcons = icons.map {
+            UserIconLocalEntity(uniqueUserId = userId, uniqueIconId = it.uniqueIconId)
+        }
 
         if (userCourses.isNotEmpty()) database.userCoursesDao.insertUserCoursesIgnore(userCourses)
         if (userModules.isNotEmpty()) database.userModulesDao.insertUserModulesIgnore(userModules)
         if (userBanners.isNotEmpty()) database.userBannerDao.initializeUserBanners(userBanners)
+        if (userIcons.isNotEmpty()) database.userIconDao.initializeUserIcons(userIcons)
     }
 }

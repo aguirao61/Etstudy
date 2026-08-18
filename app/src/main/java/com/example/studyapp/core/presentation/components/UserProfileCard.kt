@@ -1,5 +1,6 @@
 package com.example.studyapp.core.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -9,13 +10,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.studyapp.R
 import com.example.studyapp.core.presentation.ui.theme.*
 import com.example.studyapp.core.util.NumberFormatter
 
@@ -25,6 +31,7 @@ fun UserProfileCard(
     expCurrent: Int,
     expMax: Int,
     level: Int,
+    iconUrl: String? = null,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
@@ -41,7 +48,7 @@ fun UserProfileCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Circle Avatar Placeholder
+            // Avatar dinámico
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -50,12 +57,26 @@ fun UserProfileCard(
                     .border(1.dp, StudyTheme.cardBorder, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Avatar",
-                    tint = StudyTheme.textSub,
-                    modifier = Modifier.size(36.dp)
-                )
+                if (iconUrl != null) {
+                    val context = LocalContext.current
+                    val resId = remember(iconUrl) {
+                        val id = context.resources.getIdentifier(iconUrl, "drawable", context.packageName)
+                        if (id != 0) id else R.drawable.img
+                    }
+                    Image(
+                        painter = painterResource(id = resId),
+                        contentDescription = "Avatar",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Avatar",
+                        tint = StudyTheme.textSub,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
             }
 
             // Datos del Usuario

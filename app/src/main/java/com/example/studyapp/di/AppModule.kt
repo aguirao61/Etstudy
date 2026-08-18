@@ -4,25 +4,26 @@ import android.content.Context
 import androidx.room.Room
 import com.example.studyapp.core.AppDatabase
 import com.example.studyapp.core.util.DatabaseInitializer
+import com.example.studyapp.core.domain.GameEngine
 import com.example.studyapp.questions.data.repository.SubjectRepositoryImpl
 import com.example.studyapp.questions.domain.repositories.SubjectRepository
 import com.example.studyapp.user_profile.data.repositories.BannerRepositoryImpl
+import com.example.studyapp.user_profile.data.repositories.IconRepositoryImpl
 import com.example.studyapp.user_profile.data.repositories.TrophyRepositoryImpl
 import com.example.studyapp.user_profile.data.repositories.UserProfileRepositoryImpl
 import com.example.studyapp.user_profile.domain.repositories.BannerRepository
+import com.example.studyapp.user_profile.domain.repositories.IconRepository
 import com.example.studyapp.user_profile.domain.repositories.TrophyRepository
 import com.example.studyapp.user_profile.domain.repositories.UserRepository
-import com.example.studyapp.user_profile.domain.use_cases.AddExperienceUseCase
-import com.example.studyapp.user_profile.domain.use_cases.ProcessQuizResultsUseCase
 
 interface AppModule {
     val database: AppDatabase
     val userRepository: UserRepository
     val trophyRepository: TrophyRepository
     val bannerRepository: BannerRepository
+    val iconRepository: IconRepository
     val subjectRepository: SubjectRepository
-    val addExperienceUseCase: AddExperienceUseCase
-    val processQuizResultsUseCase: ProcessQuizResultsUseCase
+    val gameEngine: GameEngine
 }
 
 class AppModuleImpl(
@@ -35,7 +36,7 @@ class AppModuleImpl(
             AppDatabase::class.java,
             "study_app_db"
         )
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(false)
             .build()
     }
 
@@ -61,6 +62,10 @@ class AppModuleImpl(
         BannerRepositoryImpl(database.bannerDao, database.userBannerDao, database.userProfileDao)
     }
 
+    override val iconRepository: IconRepository by lazy {
+        IconRepositoryImpl(database.iconDao, database.userIconDao)
+    }
+
     override val subjectRepository: SubjectRepository by lazy {
         SubjectRepositoryImpl(
             coursesDao = database.coursesDao,
@@ -73,11 +78,7 @@ class AppModuleImpl(
         )
     }
 
-    override val addExperienceUseCase: AddExperienceUseCase by lazy {
-        AddExperienceUseCase(userRepository)
-    }
-
-    override val processQuizResultsUseCase: ProcessQuizResultsUseCase by lazy {
-        ProcessQuizResultsUseCase(userRepository, subjectRepository, bannerRepository)
+    override val gameEngine: GameEngine by lazy {
+        GameEngine(userRepository, subjectRepository, bannerRepository, iconRepository)
     }
 }

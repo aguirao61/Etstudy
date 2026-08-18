@@ -151,6 +151,7 @@ fun SubjectsScreenContent(
                     level = state.level,
                     expCurrent = state.expCurrent,
                     expMax = state.expMax,
+                    iconUrl = state.equippedIconUrl,
                     onClick = { onIntent(SubjectsIntent.OnProfileClick) }
                 )
 

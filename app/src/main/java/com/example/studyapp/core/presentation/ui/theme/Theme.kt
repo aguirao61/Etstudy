@@ -4,8 +4,12 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+
+val LocalDarkTheme = staticCompositionLocalOf { false }
 
 private val DarkColorScheme = darkColorScheme(
     primary = PrimaryBlue,
@@ -52,11 +56,13 @@ fun StudyAppTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(LocalDarkTheme provides darkTheme) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }
 
 // Helpers para acceder a los colores de forma semántica
@@ -72,16 +78,16 @@ object StudyTheme {
     val textSub @Composable get() = colorScheme.onSurfaceVariant
     
     // Perfil adaptativo
-    val profileBg @Composable get() = if (isSystemInDarkTheme()) DarkProfileBg else LightProfileBg
-    val profileBorder @Composable get() = if (isSystemInDarkTheme()) DarkProfileBorder else LightProfileBorder
+    val profileBg @Composable get() = if (LocalDarkTheme.current) DarkProfileBg else LightProfileBg
+    val profileBorder @Composable get() = if (LocalDarkTheme.current) DarkProfileBorder else LightProfileBorder
 
     // Adaptativos manuales
-    val topicPillBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF1E293B) else Color(0xFFDBEAFE)
-    val topicPillText @Composable get() = if (isSystemInDarkTheme()) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
+    val topicPillBg @Composable get() = if (LocalDarkTheme.current) Color(0xFF1E293B) else Color(0xFFDBEAFE)
+    val topicPillText @Composable get() = if (LocalDarkTheme.current) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
 
     // Colores de éxito/error suavizados para modo oscuro
-    val success @Composable get() = if (isSystemInDarkTheme()) Color(0xFF4ADE80) else SuccessGreen
-    val error @Composable get() = if (isSystemInDarkTheme()) Color(0xFFF87171) else ErrorRed
-    val successBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF064E3B).copy(alpha = 0.4f) else LightSuccessGreen
-    val errorBg @Composable get() = if (isSystemInDarkTheme()) Color(0xFF450A0A).copy(alpha = 0.4f) else LightErrorRed
+    val success @Composable get() = if (LocalDarkTheme.current) Color(0xFF4ADE80) else SuccessGreen
+    val error @Composable get() = if (LocalDarkTheme.current) Color(0xFFF87171) else ErrorRed
+    val successBg @Composable get() = if (LocalDarkTheme.current) Color(0xFF064E3B).copy(alpha = 0.4f) else LightSuccessGreen
+    val errorBg @Composable get() = if (LocalDarkTheme.current) Color(0xFF450A0A).copy(alpha = 0.4f) else LightErrorRed
 }

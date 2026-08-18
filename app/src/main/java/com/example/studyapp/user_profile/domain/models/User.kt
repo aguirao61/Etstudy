@@ -20,7 +20,8 @@ data class User(
     val equippedBannerColour: Long? = null,
     val equippedBannerTextColour: Long? = null,
     val equippedBannerIcon: String? = null,
-    val equippedBannerContent: String? = null
+    val equippedBannerContent: String? = null,
+    val selectedTheme: ThemeMode = ThemeMode.SYSTEM
 ) {
     val maxExperience: Int
         get() = ExperienceCalculator.calculateMaxExp(level)

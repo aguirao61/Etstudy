@@ -26,6 +26,8 @@ import com.example.studyapp.user_profile.data.tables.trophy_table.TrophyDao
 import com.example.studyapp.user_profile.data.tables.trophy_table.TrophyLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_banner_table.UserBannerDao
 import com.example.studyapp.user_profile.data.tables.user_banner_table.UserBannerLocalEntity
+import com.example.studyapp.user_profile.data.tables.user_icon_table.UserIconDao
+import com.example.studyapp.user_profile.data.tables.user_icon_table.UserIconLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_table.UserProfileDao
 import com.example.studyapp.user_profile.data.tables.user_table.UserLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_trophy_table.UserTrophyDao
@@ -46,9 +48,10 @@ import com.example.studyapp.user_profile.data.tables.user_trophy_table.UserTroph
         RelationModuleQuestionLocalEntity::class,
         UserCoursesLocalEntity::class,
         UserModulesLocalEntity::class,
-        FailedQuestionsLocalEntity::class
+        FailedQuestionsLocalEntity::class,
+        UserIconLocalEntity::class
     ],
-    version = 8,
+    version = 12,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -59,6 +62,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val iconDao: IconDao
     abstract val userBannerDao: UserBannerDao
     abstract val userTrophyDao: UserTrophyDao
+    abstract val userIconDao: UserIconDao
 
     //Questions
     abstract val coursesDao: CoursesDao

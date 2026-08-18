@@ -24,6 +24,16 @@ interface UserProfileDao {
     @Query("SELECT uniqueUserId FROM local_users")
     suspend fun getAllUserIds(): List<Int>
 
+    @Query("SELECT * FROM local_users")
+    fun getAllUsersFlow(): Flow<List<UserLocalEntity>>
+
+    @Query("""
+        SELECT u.*, i.iconImage as equippedIconUrl
+        FROM local_users u
+        LEFT JOIN icons i ON u.equippedIconId = i.uniqueIconId
+    """)
+    fun getAllUsersWithIconsFlow(): Flow<List<UserWithIcon>>
+
     @Query("UPDATE local_users SET equippedIconId = :iconId, equippedBannerId = :bannerId WHERE uniqueUserId = :userId")
     suspend fun updateEquippedCosmetics(userId: Int, iconId: Int?, bannerId: Int?)
 
@@ -48,5 +58,14 @@ interface UserProfileDao {
         completedCoursesCount: Int = 0
     )
 
+    @Query("UPDATE local_users SET selectedTheme = :theme WHERE uniqueUserId = :userId")
+    suspend fun updateUserTheme(userId: Int, theme: String)
 
+    @Query("DELETE FROM local_users WHERE uniqueUserId = :userId")
+    suspend fun deleteUserById(userId: Int)
 }
+
+data class UserWithIcon(
+    @androidx.room.Embedded val user: UserLocalEntity,
+    val equippedIconUrl: String?
+)
