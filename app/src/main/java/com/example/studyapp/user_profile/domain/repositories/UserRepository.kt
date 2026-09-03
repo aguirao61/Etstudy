@@ -12,4 +12,5 @@ interface UserRepository {
     suspend fun updateUserTheme(userId: Int, theme: String)
     suspend fun updateEquippedCosmetics(userId: Int, iconId: Int?, bannerId: Int?)
     suspend fun deleteUser(userId: Int)
+    suspend fun checkAndResetStreak(userId: Int)
 }

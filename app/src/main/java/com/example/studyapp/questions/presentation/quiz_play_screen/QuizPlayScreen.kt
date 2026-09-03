@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studyapp.core.presentation.ui.theme.*
+import com.example.studyapp.core.util.NumberFormatter
 import com.example.studyapp.questions.domain.models.Attempt
 import kotlinx.coroutines.launch
 
@@ -102,6 +104,22 @@ fun QuizPlayScreen(
                     },
                     actions = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (state.isTimerEnabled) {
+                                Icon(
+                                    imageVector = Icons.Default.Timer,
+                                    contentDescription = null,
+                                    tint = StudyTheme.textSub,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = NumberFormatter.formatDuration(state.timeElapsedSeconds),
+                                    color = StudyTheme.textSub,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
                             if (state.immediateCorrection) {
                                 Text(
                                     text = "${state.score} pts",

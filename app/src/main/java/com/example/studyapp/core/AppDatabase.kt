@@ -18,6 +18,8 @@ import com.example.studyapp.questions.data.tables.user_courses_table.UserCourses
 import com.example.studyapp.questions.data.tables.user_courses_table.UserCoursesLocalEntity
 import com.example.studyapp.questions.data.tables.user_modules_table.UserModulesDao
 import com.example.studyapp.questions.data.tables.user_modules_table.UserModulesLocalEntity
+import com.example.studyapp.user_profile.data.tables.daily_mission_table.DailyMissionDao
+import com.example.studyapp.user_profile.data.tables.daily_mission_table.DailyMissionLocalEntity
 import com.example.studyapp.user_profile.data.tables.banner_table.BannerDao
 import com.example.studyapp.user_profile.data.tables.banner_table.BannerLocalEntity
 import com.example.studyapp.user_profile.data.tables.icon_table.IconDao
@@ -49,9 +51,10 @@ import com.example.studyapp.user_profile.data.tables.user_trophy_table.UserTroph
         UserCoursesLocalEntity::class,
         UserModulesLocalEntity::class,
         FailedQuestionsLocalEntity::class,
-        UserIconLocalEntity::class
+        UserIconLocalEntity::class,
+        DailyMissionLocalEntity::class
     ],
-    version = 12,
+    version = 14,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -63,6 +66,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract val userBannerDao: UserBannerDao
     abstract val userTrophyDao: UserTrophyDao
     abstract val userIconDao: UserIconDao
+    abstract val dailyMissionDao: DailyMissionDao
 
     //Questions
     abstract val coursesDao: CoursesDao

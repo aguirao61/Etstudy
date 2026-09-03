@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.studyapp.questions.domain.SubjectFlow
+import com.example.studyapp.user_profile.domain.repositories.DailyMissionRepository
 import com.example.studyapp.user_profile.domain.repositories.UserRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 
 class HomeViewModel(
     private val userRepository: UserRepository,
+    private val dailyMissionRepository: DailyMissionRepository,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -24,24 +26,44 @@ class HomeViewModel(
     private val _effect = Channel<HomeEffect>()
     val effect = _effect.receiveAsFlow()
 
-    init {
+        init {
         val userId = savedStateHandle.get<Int>("userId") ?: 0
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            userRepository.getUserFlow(userId).collect { user ->
-                if (user != null) {
-                    _state.update {
-                        it.copy(
-                            userName = user.username,
-                            expCurrent = user.experience,
-                            expMax = user.maxExperience,
-                            level = user.level,
-                            equippedIconUrl = user.equippedIconUrl,
-                            isLoading = false
-                        )
+            
+            // Check and reset daily missions and streak on startup
+            launch { dailyMissionRepository.checkAndResetDailyMission(userId) }
+            launch { userRepository.checkAndResetStreak(userId) }
+
+            // Collect User
+            launch {
+                userRepository.getUserFlow(userId).collect { user ->
+                    if (user != null) {
+                        _state.update {
+                            it.copy(
+                                userName = user.username,
+                                expCurrent = user.experience,
+                                expMax = user.maxExperience,
+                                level = user.level,
+                                equippedIconUrl = user.equippedIconUrl,
+                                currentStreak = user.currentStreak,
+                                isLoading = false
+                            )
+                        }
+                    } else {
+                        _state.update { it.copy(isLoading = false) }
                     }
-                } else {
-                    _state.update { it.copy(isLoading = false) }
+                }
+            }
+
+            // Collect Daily Missions
+            launch {
+                dailyMissionRepository.getDailyMissionFlow(userId).collect { mission ->
+                    if (mission == null) {
+                        dailyMissionRepository.createDailyMission(userId)
+                    } else {
+                        _state.update { it.copy(dailyMission = mission) }
+                    }
                 }
             }
         }
@@ -53,7 +75,7 @@ class HomeViewModel(
                 _state.update { it.copy(isStartPopupVisible = true) }
             }
             HomeIntent.OnGuideClick -> {
-                // Acción de la guía
+                // Guide Action
             }
             HomeIntent.OnProfileClick -> {
                 sendEffect(HomeEffect.NavigateToProfile)
@@ -80,6 +102,12 @@ class HomeViewModel(
                 if (flow != null) {
                     sendEffect(HomeEffect.NavigateToStudy(flow))
                 }
+            }
+            HomeIntent.OnChallengesClick -> {
+                _state.update { it.copy(isDailyChallengesVisible = true) }
+            }
+            HomeIntent.DismissChallengesDialog -> {
+                _state.update { it.copy(isDailyChallengesVisible = false) }
             }
         }
     }

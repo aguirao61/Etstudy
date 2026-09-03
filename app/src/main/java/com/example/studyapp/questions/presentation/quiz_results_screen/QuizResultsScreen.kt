@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -98,11 +99,19 @@ fun QuizResultsScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                                 RewardBadge(
-                                    label = "Puntos de Estudio",
+                                    label = "Estudio",
                                     value = "+${NumberFormatter.formatWithCommas(attempt.studyPointsGained)}",
                                     color = PrimaryBlue,
                                     modifier = Modifier.weight(1f)
                                 )
+                                if (attempt.timeElapsedSeconds > 0) {
+                                    RewardBadge(
+                                        label = "Tiempo",
+                                        value = NumberFormatter.formatDuration(attempt.timeElapsedSeconds),
+                                        color = GrayDark,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
                         }
                     }
@@ -218,15 +227,27 @@ fun QuizResultsScreen(
             ) {
                 LevelUpPopup(level = user?.level ?: 0)
             }
+
+            // Milestone Popup Overlay
+            AnimatedVisibility(
+                visible = state.showMilestone,
+                enter = fadeIn() + scaleIn(),
+                exit = fadeOut() + scaleOut(),
+                modifier = Modifier.align(Alignment.Center)
+            ) {
+                MilestonePopup()
+            }
         }
     }
 }
 
 @Composable
 fun LevelUpPopup(level: Int) {
+    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
     Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),
-        color = Color(0xFFFEF3C7),
+        color = bonusBg,
         border = BorderStroke(4.dp, LevelColor),
         shadowElevation = 12.dp
     ) {
@@ -253,6 +274,38 @@ fun LevelUpPopup(level: Int) {
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF92400E)
+            )
+        }
+    }
+}
+
+@Composable
+fun MilestonePopup() {
+    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = bonusBg,
+        border = BorderStroke(4.dp, PrimaryBlue),
+        shadowElevation = 12.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.EmojiEvents,
+                contentDescription = null,
+                tint = PrimaryBlue,
+                modifier = Modifier.size(80.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "¡NUEVO HITO!",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black,
+                color = PrimaryBlue
             )
         }
     }

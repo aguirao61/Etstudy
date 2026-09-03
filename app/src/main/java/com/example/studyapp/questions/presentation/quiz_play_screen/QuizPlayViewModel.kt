@@ -10,6 +10,7 @@ import com.example.studyapp.questions.domain.models.AttemptQuestion
 import com.example.studyapp.questions.domain.repositories.SubjectRepository
 import com.example.studyapp.questions.domain.SubjectFlow
 import kotlinx.coroutines.channels.Channel
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,10 +38,23 @@ class QuizPlayViewModel(
         val count = savedStateHandle.get<Int>("count") ?: 10
         val immediate = savedStateHandle.get<Boolean>("immediate") ?: false
         val isRandom = savedStateHandle.get<Boolean>("isRandom") ?: false
+        val timerEnabled = savedStateHandle.get<Boolean>("timerEnabled") ?: false
         val flowName = savedStateHandle.get<String>("flowType") ?: SubjectFlow.TEST.name
         val flow = try { SubjectFlow.valueOf(flowName) } catch (_: Exception) { SubjectFlow.TEST }
         
-        _state.update { it.copy(immediateCorrection = immediate) }
+        _state.update { it.copy(
+            immediateCorrection = immediate,
+            isTimerEnabled = timerEnabled
+        ) }
+
+        if (timerEnabled) {
+            viewModelScope.launch {
+                while (!_state.value.isFinished) {
+                    delay(1000L)
+                    _state.update { it.copy(timeElapsedSeconds = it.timeElapsedSeconds + 1) }
+                }
+            }
+        }
 
         viewModelScope.launch {
             val questions = when (flow) {
@@ -211,6 +225,8 @@ class QuizPlayViewModel(
                         studyPointsGained = result.studyPointsGained,
                         previousLevel = result.previousLevel,
                         newLevel = result.newLevel,
+                        timeElapsedSeconds = s.timeElapsedSeconds,
+                        milestoneUnlocked = result.milestoneUnlocked,
                         questions = attemptQuestions
                     )
                     

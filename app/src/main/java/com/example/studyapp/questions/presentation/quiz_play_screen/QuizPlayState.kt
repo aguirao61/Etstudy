@@ -11,6 +11,8 @@ data class QuizPlayState(
     val isCorrected: Boolean = false,
     val score: Int = 0,
     val immediateCorrection: Boolean = false,
+    val isTimerEnabled: Boolean = false,
+    val timeElapsedSeconds: Long = 0,
     val isFinished: Boolean = false,
     val isLoading: Boolean = true
 ) {

@@ -89,9 +89,7 @@ class SubjectsViewModel(
                 toggleFavorite(intent.subject)
             }
             is SubjectsIntent.OnSubjectClick -> {
-                if (_state.value.flowType != SubjectFlow.BROWSE) {
-                    sendEffect(SubjectsEffect.NavigateToQuizConfig(intent.subject))
-                }
+                sendEffect(SubjectsEffect.NavigateToQuizConfig(intent.subject))
             }
             SubjectsIntent.OnProfileClick -> {
                 sendEffect(SubjectsEffect.NavigateToProfile)

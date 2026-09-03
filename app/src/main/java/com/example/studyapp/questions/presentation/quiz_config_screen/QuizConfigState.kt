@@ -13,7 +13,9 @@ data class QuizConfigState(
     val isRandomOrder: Boolean = true,
     val isTimerEnabled: Boolean = false,
     val immediateCorrection: Boolean = true,
-    val totalQuestionsAvailable: Int = 0
+    val totalQuestionsAvailable: Int = 0,
+    val passedTestsCount: Int = 0,
+    val showProgress: Boolean = false
 ) {
     val selectedTopicQuestionsCount: Int
         get() = if (topics.isNotEmpty() && selectedTopicIndex in topics.indices) topics[selectedTopicIndex].second else 0

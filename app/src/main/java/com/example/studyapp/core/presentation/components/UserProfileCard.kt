@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -27,12 +28,13 @@ import com.example.studyapp.core.util.NumberFormatter
 
 @Composable
 fun UserProfileCard(
+    modifier: Modifier = Modifier,
     name: String,
     expCurrent: Int,
     expMax: Int,
     level: Int,
     iconUrl: String? = null,
-    modifier: Modifier = Modifier,
+    currentStreak: Int = 0,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -81,12 +83,46 @@ fun UserProfileCard(
 
             // Datos del Usuario
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Nombre: $name",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = StudyTheme.textMain
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Nombre: $name",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = StudyTheme.textMain,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    if (currentStreak > 0) {
+                        Surface(
+                            color = PrimaryBlue.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.2f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Whatshot,
+                                    contentDescription = null,
+                                    tint = PrimaryBlue,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = currentStreak.toString(),
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 12.sp,
+                                    color = PrimaryBlue
+                                )
+                            }
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -95,7 +131,7 @@ fun UserProfileCard(
                     text = "EXP: ${NumberFormatter.formatWithCommas(expCurrent)} / ${NumberFormatter.formatWithCommas(expMax)}",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = StudyTheme.textSub
+                    color = ExpColor
                 )
                 LinearProgressIndicator(
                     progress = { expCurrent.toFloat() / expMax.toFloat() },

@@ -14,6 +14,8 @@ data class Attempt(
     val studyPointsGained: Int,
     val previousLevel: Int = 0,
     val newLevel: Int = 0,
+    val timeElapsedSeconds: Long = 0,
+    val milestoneUnlocked: Boolean = false,
     val questions: List<AttemptQuestion>
 ) : Parcelable
 

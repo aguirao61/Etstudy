@@ -13,4 +13,10 @@ object NumberFormatter {
     fun formatWithCommas(value: Long): String {
         return usFormatter.format(value)
     }
+
+    fun formatDuration(seconds: Long): String {
+        val mins = seconds / 60
+        val secs = seconds % 60
+        return "%02d:%02d".format(mins, secs)
+    }
 }

@@ -3,6 +3,7 @@ package com.example.studyapp.core.presentation.screen.home_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,12 +15,14 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -86,6 +89,13 @@ fun StudyHomeScreenContent(
             onOptionClick = { onIntent(HomeIntent.OnTestOptionClick(it)) })
     }
 
+    if (state.isDailyChallengesVisible) {
+        DailyChallengesDialog(
+            mission = state.dailyMission,
+            onDismiss = { onIntent(HomeIntent.DismissChallengesDialog) }
+        )
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(
@@ -106,27 +116,28 @@ fun StudyHomeScreenContent(
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 1. COMPONENTE DE PERFIL SUPERIOR
+                // Profile Card
                 UserProfileCard(
                     name = state.userName,
                     expCurrent = state.expCurrent,
                     expMax = state.expMax,
                     level = state.level,
                     iconUrl = state.equippedIconUrl,
+                    currentStreak = state.currentStreak,
                     modifier = Modifier.padding(top = 16.dp),
                     onClick = { onIntent(HomeIntent.OnProfileClick) }
                 )
 
-                // Espacio flexible
+                // Empty Space
                 Spacer(modifier = Modifier.weight(1f))
 
-                // CONTENIDO INFERIOR
+                // Main Content
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     modifier = Modifier.padding(bottom = 16.dp)
                 ) {
-                    // Icono Guía
+                    // Guide Icon
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.CenterEnd
@@ -134,7 +145,7 @@ fun StudyHomeScreenContent(
                         FloatingGuideButton(onClick = { onIntent(HomeIntent.OnGuideClick) })
                     }
 
-                    // Botón central "INICIAR"
+                    // Start Button
                     CustomStartButton(
                         text = "INICIAR",
                         brush = Brush.verticalGradient(
@@ -146,17 +157,15 @@ fun StudyHomeScreenContent(
                         onClick = { onIntent(HomeIntent.OnStartClick) }
                     )
 
-                    // Banner de Desafíos
-                    ChallengeBanner()
+                    // Challenge Banner
+                    ChallengeBanner(onClick = { onIntent(HomeIntent.OnChallengesClick) })
                 }
             }
         }
     }
 }
 
-// -------------------------------------------------------------
-// COMPONENTES DE LA PANTALLA
-// -------------------------------------------------------------
+// Screen Components
 
 @Composable
 fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
@@ -193,12 +202,6 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
                     icon = Icons.Default.Warning,
                     brush = Brush.verticalGradient(colors = listOf(MutedRed, MutedRedDark)), // Rojo suave
                     onClick = { onOptionClick("Tests de fallos") }
-                )
-
-                CustomStartButton(
-                    text = "PRÓXIMAMENTE...",
-                    brush = Brush.verticalGradient(colors = listOf(MutedGray, MutedGrayDark)), // Gris suave
-                    onClick = { onOptionClick("Próximamente") }
                 )
                 
                 TextButton(onClick = onDismiss, modifier = Modifier.padding(top = 8.dp)) {
@@ -258,8 +261,9 @@ fun CustomStartButton(
 }
 
 @Composable
-fun ChallengeBanner() {
+fun ChallengeBanner(onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(70.dp),
@@ -293,6 +297,155 @@ fun ChallengeBanner() {
                 modifier = Modifier.size(32.dp)
             )
         }
+    }
+}
+
+@Composable
+fun DailyChallengesDialog(
+    mission: com.example.studyapp.user_profile.domain.models.DailyMission?,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            color = StudyTheme.cardBg,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Desafíos Diarios",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = StudyTheme.textMain
+                )
+
+                if (mission == null) {
+                    Text("Cargando desafíos...", color = StudyTheme.textSub)
+                } else {
+                    ChallengeItem(
+                        title = "Completa 5 cuestionarios",
+                        reward = "1000 EXP",
+                        progress = mission.quizzesCompletedProgress,
+                        currentValue = mission.quizzesCompleted,
+                        maxValue = 5,
+                        isClaimed = mission.is5QuizzesClaimed
+                    )
+
+                    ChallengeItem(
+                        title = "Aprueba 2 cuestionarios",
+                        reward = "1000 EXP",
+                        progress = mission.quizzesPassedProgress,
+                        currentValue = mission.quizzesPassed,
+                        maxValue = 2,
+                        isClaimed = mission.is2PassedClaimed
+                    )
+
+                    ChallengeItem(
+                        title = "Estudia 2 Asignaturas distintas",
+                        reward = "1000 EXP",
+                        progress = mission.subjectsStudiedProgress,
+                        currentValue = mission.subjectsStudied.size,
+                        maxValue = 2,
+                        isClaimed = mission.is2SubjectsClaimed
+                    )
+
+                    ChallengeItem(
+                        title = "Completa todas las misiones",
+                        reward = "2000 EXP",
+                        progress = if (mission.allCompleted) 1f else 0f,
+                        currentValue = if (mission.allCompleted) 1 else 0,
+                        maxValue = 1,
+                        isClaimed = mission.isAllBonusClaimed,
+                        isBonus = true
+                    )
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue)
+                ) {
+                    Text("CERRAR", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ChallengeItem(
+    title: String,
+    reward: String,
+    progress: Float,
+    currentValue: Int,
+    maxValue: Int,
+    isClaimed: Boolean,
+    isBonus: Boolean = false
+) {
+    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = if (isBonus) bonusBg else StudyTheme.surfaceBg,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = StudyTheme.textMain
+                )
+                Text(
+                    text = if (isClaimed) "¡Reclamado!" else "Recompensa: $reward",
+                    fontSize = 12.sp,
+                    color = if (isClaimed) MutedGreenDark else StudyTheme.textSub,
+                    fontWeight = if (isClaimed) FontWeight.Bold else FontWeight.Normal
+                )
+            }
+            if (isClaimed) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = MutedGreenDark,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else {
+                Text(
+                    text = "$currentValue/$maxValue",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = PrimaryBlue
+                )
+            }
+        }
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(CircleShape),
+            color = if (isClaimed) MutedGreenDark else PrimaryBlue,
+            trackColor = if (isClaimed) MutedGreen.copy(alpha = 0.2f) else PrimaryBlueLight
+        )
     }
 }
 
@@ -331,11 +484,11 @@ fun BottomNavigationBar(onNavClick: (String) -> Unit) {
                 icon = { Icon(icon, contentDescription = label) },
                 label = { Text(label, fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal) },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = PrimaryBlueDark, // Azul vibrante para el seleccionado
+                    selectedIconColor = PrimaryBlueDark,
                     selectedTextColor = PrimaryBlueDark,
-                    unselectedIconColor = StudyTheme.textSub,         // Gris azulado para los otros
+                    unselectedIconColor = StudyTheme.textSub,
                     unselectedTextColor = StudyTheme.textSub,
-                    indicatorColor = Color(0xFFDBEAFE)    // Fondo suave para el icono seleccionado
+                    indicatorColor = Color(0xFFDBEAFE)
                 )
             )
         }

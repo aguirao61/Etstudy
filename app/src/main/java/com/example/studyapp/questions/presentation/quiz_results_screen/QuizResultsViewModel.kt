@@ -63,13 +63,21 @@ class QuizResultsViewModel(
         if (user != null) {
             _state.update { it.copy(user = user) }
             
-            // Trigger level up popup if level increased
-            if (attempt.newLevel > attempt.previousLevel) {
-                viewModelScope.launch {
-                    delay(1200) // Delay to sync with XP bar progress
+            // Trigger popups sequentially
+            viewModelScope.launch {
+                delay(1200) // Initial delay to sync with animations
+                
+                if (attempt.newLevel > attempt.previousLevel) {
                     _state.update { it.copy(showLevelUp = true) }
-                    delay(3500) // Show for a few seconds
+                    delay(3500) // Show level up for a few seconds
                     _state.update { it.copy(showLevelUp = false) }
+                    delay(500) // Brief pause between popups
+                }
+                
+                if (attempt.milestoneUnlocked) {
+                    _state.update { it.copy(showMilestone = true) }
+                    delay(3500) // Show milestone for a few seconds
+                    _state.update { it.copy(showMilestone = false) }
                 }
             }
             
@@ -109,5 +117,6 @@ data class QuizResultsState(
     val user: User? = null,
     val animatedExp: Int = 0,
     val showLevelUp: Boolean = false,
+    val showMilestone: Boolean = false,
     val isLoading: Boolean = false
 )

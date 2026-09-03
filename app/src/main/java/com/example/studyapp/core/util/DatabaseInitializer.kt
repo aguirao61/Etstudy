@@ -8,6 +8,7 @@ import com.example.studyapp.questions.data.tables.user_courses_table.UserCourses
 import com.example.studyapp.questions.data.tables.user_modules_table.UserModulesLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_banner_table.UserBannerLocalEntity
 import com.example.studyapp.user_profile.data.tables.user_icon_table.UserIconLocalEntity
+import com.example.studyapp.user_profile.data.tables.daily_mission_table.DailyMissionLocalEntity
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,7 +21,7 @@ class DatabaseInitializer(
 
     suspend fun initializeData() = withContext(Dispatchers.IO) {
         database.withTransaction {
-            // 1. Sincronizar Asignaturas (Courses)
+            // Sincronizar Asignaturas (Courses)
             val coursesCsv = csvReader.readCourses()
             val existingCourses = database.coursesDao.getAllCourses()
             val codeToId = existingCourses.associate { it.courseCode to it.uniqueCourseId }
@@ -40,7 +41,7 @@ class DatabaseInitializer(
             val courseCodeToId = coursesInDb.associate { it.courseCode to it.uniqueCourseId }
             val courseNameToId = coursesInDb.associate { it.courseName.trim() to it.uniqueCourseId }
 
-            // 2. Sincronizar Módulos
+            // Sincronizar Módulos
             val modulesCsv = csvReader.readModules()
             val existingModules = database.modulesDao.getAllModules()
             // Clave única para módulo: (IdAsignatura, NumeroModulo)
@@ -68,7 +69,7 @@ class DatabaseInitializer(
             // Para el mapeo de relaciones (index 1-based del CSV de módulos)
             val moduleIds = modulesInDb.sortedBy { it.uniqueModuleId }.map { it.uniqueModuleId }
 
-            // 3. Sincronizar Preguntas (IDs fijos en CSV)
+            // Sincronizar Preguntas (IDs fijos en CSV)
             val questionsCsv = csvReader.readQuestions()
             database.questionsDao.upsertQuestions(questionsCsv)
             
@@ -77,12 +78,12 @@ class DatabaseInitializer(
             val questionsToDelete = existingQuestions.filter { it.uniqueQuestionId !in csvQuestionIds }
             database.questionsDao.deleteQuestions(questionsToDelete)
 
-            // 4. Cargar Respuestas (Borrado y re-inserción simple ya que no hay datos de usuario vinculados a answerId)
+            // Cargar Respuestas (Borrado y re-inserción simple ya que no hay datos de usuario vinculados a answerId)
             database.answersDao.deleteAllAnswers()
             val answersCsv = csvReader.readAnswers()
             database.answersDao.insertOrUpdateAnswers(answersCsv)
 
-            // 5. Cargar Relaciones Módulo-Pregunta (Borrado y re-inserción)
+            // Cargar Relaciones Módulo-Pregunta (Borrado y re-inserción)
             database.relationModuleQuestionDao.deleteAllRelations()
             val relationsCsv = csvReader.readQuestionModuleRelations()
             val relationsToInsert = relationsCsv.map { rel ->
@@ -92,7 +93,7 @@ class DatabaseInitializer(
             }
             database.relationModuleQuestionDao.insertOrUpdateRelations(relationsToInsert)
 
-            // 6. Sincronizar Banners
+            // Sincronizar Banners
             val bannersCsv = csvReader.readBanners()
             val existingBanners = database.bannerDao.getAllBanners()
             val contentToId = existingBanners.associate { it.bannerContent to it.uniqueBannerId }
@@ -113,7 +114,7 @@ class DatabaseInitializer(
 
             val bannersInDb = database.bannerDao.getAllBanners()
 
-            // 6.1 Sincronizar Iconos
+            // Sincronizar Iconos
             val iconsCsv = csvReader.readIcons()
             val existingIcons = database.iconDao.getAllIcons()
             
@@ -144,7 +145,7 @@ class DatabaseInitializer(
 
             val iconsInDb = database.iconDao.getAllIcons()
 
-            // 7. ACTUALIZAR TABLAS DE USUARIO (Garantizar que todos los usuarios tienen todas las asignaturas/módulos)
+            // ACTUALIZAR TABLAS DE USUARIO (Garantizar que todos los usuarios tienen todas las asignaturas/módulos)
             val userIds = database.userProfileDao.getAllUserIds()
             
             for (userId in userIds) {
@@ -193,5 +194,11 @@ class DatabaseInitializer(
         if (userModules.isNotEmpty()) database.userModulesDao.insertUserModulesIgnore(userModules)
         if (userBanners.isNotEmpty()) database.userBannerDao.initializeUserBanners(userBanners)
         if (userIcons.isNotEmpty()) database.userIconDao.initializeUserIcons(userIcons)
+        
+        // Inicializar misiones diarias si no existen
+        val existingMission = database.dailyMissionDao.getDailyMissionByUserId(userId)
+        if (existingMission == null) {
+            database.dailyMissionDao.insertDailyMission(DailyMissionLocalEntity(userId = userId))
+        }
     }
 }

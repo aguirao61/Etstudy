@@ -35,11 +35,15 @@ class QuizConfigViewModel(
             it.copy(
                 subjectId = subjectId,
                 subjectName = subjectName,
-                flowType = flow
+                flowType = flow,
+                showProgress = true
             )
         }
 
         viewModelScope.launch {
+            val passedCount = subjectRepository.getTestsPassed(userId, subjectId)
+            _state.update { it.copy(passedTestsCount = passedCount) }
+
             val totalQuestions = if (flow == SubjectFlow.ERROR_TEST) {
                 subjectRepository.getFailedQuestionCountForCourse(userId, subjectId)
             } else {

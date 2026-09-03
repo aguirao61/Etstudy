@@ -8,10 +8,12 @@ import com.example.studyapp.core.domain.GameEngine
 import com.example.studyapp.questions.data.repository.SubjectRepositoryImpl
 import com.example.studyapp.questions.domain.repositories.SubjectRepository
 import com.example.studyapp.user_profile.data.repositories.BannerRepositoryImpl
+import com.example.studyapp.user_profile.data.repositories.DailyMissionRepositoryImpl
 import com.example.studyapp.user_profile.data.repositories.IconRepositoryImpl
 import com.example.studyapp.user_profile.data.repositories.TrophyRepositoryImpl
 import com.example.studyapp.user_profile.data.repositories.UserProfileRepositoryImpl
 import com.example.studyapp.user_profile.domain.repositories.BannerRepository
+import com.example.studyapp.user_profile.domain.repositories.DailyMissionRepository
 import com.example.studyapp.user_profile.domain.repositories.IconRepository
 import com.example.studyapp.user_profile.domain.repositories.TrophyRepository
 import com.example.studyapp.user_profile.domain.repositories.UserRepository
@@ -22,6 +24,7 @@ interface AppModule {
     val trophyRepository: TrophyRepository
     val bannerRepository: BannerRepository
     val iconRepository: IconRepository
+    val dailyMissionRepository: DailyMissionRepository
     val subjectRepository: SubjectRepository
     val gameEngine: GameEngine
 }
@@ -66,6 +69,10 @@ class AppModuleImpl(
         IconRepositoryImpl(database.iconDao, database.userIconDao)
     }
 
+    override val dailyMissionRepository: DailyMissionRepository by lazy {
+        DailyMissionRepositoryImpl(database.dailyMissionDao)
+    }
+
     override val subjectRepository: SubjectRepository by lazy {
         SubjectRepositoryImpl(
             coursesDao = database.coursesDao,
@@ -79,6 +86,6 @@ class AppModuleImpl(
     }
 
     override val gameEngine: GameEngine by lazy {
-        GameEngine(userRepository, subjectRepository, bannerRepository, iconRepository)
+        GameEngine(userRepository, subjectRepository, bannerRepository, iconRepository, dailyMissionRepository)
     }
 }

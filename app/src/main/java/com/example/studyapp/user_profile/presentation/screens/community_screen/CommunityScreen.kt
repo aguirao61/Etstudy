@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,7 +47,7 @@ fun CommunityScreen(
     onBackClick: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val pagerState = rememberPagerState(pageCount = { 2 })
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val scope = rememberCoroutineScope()
 
     // Synchronize pager with ViewModel state
@@ -54,6 +55,7 @@ fun CommunityScreen(
         val targetPage = when (state.leaderboardType) {
             LeaderboardType.LEVEL -> 0
             LeaderboardType.STUDY_POINTS -> 1
+            LeaderboardType.STREAK -> 2
         }
         if (pagerState.currentPage != targetPage) {
             pagerState.animateScrollToPage(targetPage)
@@ -65,7 +67,8 @@ fun CommunityScreen(
         snapshotFlow { pagerState.currentPage }.collect { page ->
             val targetType = when (page) {
                 0 -> LeaderboardType.LEVEL
-                else -> LeaderboardType.STUDY_POINTS
+                1 -> LeaderboardType.STUDY_POINTS
+                else -> LeaderboardType.STREAK
             }
             if (state.leaderboardType != targetType) {
                 viewModel.onLeaderboardTypeChange(targetType)
@@ -113,6 +116,7 @@ fun CommunityScreen(
                         val targetPage = when (type) {
                             LeaderboardType.LEVEL -> 0
                             LeaderboardType.STUDY_POINTS -> 1
+                            LeaderboardType.STREAK -> 2
                         }
                         pagerState.animateScrollToPage(targetPage)
                     }
@@ -133,13 +137,15 @@ fun CommunityScreen(
                 ) { page ->
                     val type = when (page) {
                         0 -> LeaderboardType.LEVEL
-                        else -> LeaderboardType.STUDY_POINTS
+                        1 -> LeaderboardType.STUDY_POINTS
+                        else -> LeaderboardType.STREAK
                     }
                     
                     // Organize according to selected stat
                     val usersForPage = when (type) {
                         LeaderboardType.LEVEL -> state.users.sortedWith(compareByDescending<User> { it.level }.thenByDescending { it.experience })
                         LeaderboardType.STUDY_POINTS -> state.users.sortedByDescending { it.studyPoints }
+                        LeaderboardType.STREAK -> state.users.sortedByDescending { it.currentStreak }
                     }
 
                     LeaderboardList(
@@ -177,6 +183,12 @@ fun LeaderboardToggle(
             text = "Puntos",
             isSelected = selectedType == LeaderboardType.STUDY_POINTS,
             onClick = { onTypeChange(LeaderboardType.STUDY_POINTS) },
+            modifier = Modifier.weight(1f).fillMaxHeight()
+        )
+        LeaderboardOption(
+            text = "Racha",
+            isSelected = selectedType == LeaderboardType.STREAK,
+            onClick = { onTypeChange(LeaderboardType.STREAK) },
             modifier = Modifier.weight(1f).fillMaxHeight()
         )
     }
@@ -343,7 +355,7 @@ fun LeaderboardItem(
                         Text(
                             text = "${NumberFormatter.formatWithCommas(user.experience)} EXP",
                             fontSize = 10.sp,
-                            color = if (isCurrentUser) PrimaryBlue.copy(alpha = 0.7f) else StudyTheme.textSub
+                            color = if (isCurrentUser) PrimaryBlue.copy(alpha = 0.7f) else ExpColor
                         )
                     }
                     LeaderboardType.STUDY_POINTS -> {
@@ -357,6 +369,23 @@ fun LeaderboardItem(
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = NumberFormatter.formatWithCommas(user.studyPoints),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Black,
+                                color = PrimaryBlue
+                            )
+                        }
+                    }
+                    LeaderboardType.STREAK -> {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Whatshot,
+                                contentDescription = null,
+                                tint = PrimaryBlue,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = user.currentStreak.toString(),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Black,
                                 color = PrimaryBlue

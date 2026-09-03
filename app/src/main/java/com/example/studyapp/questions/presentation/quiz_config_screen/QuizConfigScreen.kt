@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -140,6 +141,43 @@ fun QuizConfigScreenContent(
                     fontSize = 13.sp,
                     color = StudyTheme.textSub
                 )
+
+                if (state.showProgress) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    val progress = (state.passedTestsCount.toFloat() / 250f).coerceAtMost(1f)
+                    
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Tests aprobados",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = StudyTheme.textMain
+                            )
+                            Text(
+                                text = "${state.passedTestsCount} / 250",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = SuccessGreen
+                            )
+                        }
+                        
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(CircleShape),
+                            color = SuccessGreen,
+                            trackColor = LightSuccessGreen
+                        )
+                    }
+                }
             }
 
             // --- 1. SELECCIÓN DE TEMA ---

@@ -7,4 +7,6 @@ sealed class HomeIntent {
     data class OnNavClick(val item: String) : HomeIntent()
     data object DismissStartPopup : HomeIntent()
     data class OnTestOptionClick(val option: String) : HomeIntent()
+    data object OnChallengesClick : HomeIntent()
+    data object DismissChallengesDialog : HomeIntent()
 }

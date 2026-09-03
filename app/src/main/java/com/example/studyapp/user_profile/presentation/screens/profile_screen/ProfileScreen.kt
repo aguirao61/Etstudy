@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -322,7 +323,7 @@ fun ProfileScreen(
                         Text(
                             text = "${NumberFormatter.formatWithCommas(user.experience)} / ${NumberFormatter.formatWithCommas(user.maxExperience)} EXP",
                             fontSize = 10.sp,
-                            color = StudyTheme.textSub,
+                            color = ExpColor,
                             modifier = Modifier.align(Alignment.End)
                         )
                     }
@@ -356,8 +357,9 @@ fun ProfileScreen(
                                     color = PrimaryBlue
                                 )
                             }
+                            val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
                             Surface(
-                                color = Color(0xFFFEF3C7),
+                                color = bonusBg,
                                 shape = CircleShape
                             ) {
                                 Row(
@@ -365,14 +367,14 @@ fun ProfileScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Star,
+                                        imageVector = Icons.Default.Whatshot,
                                         contentDescription = null,
                                         tint = LevelColor,
                                         modifier = Modifier.size(16.dp)
                                     )
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
-                                        text = "BONUS",
+                                        text = "${user.maxStreak} RACHA",
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = LevelColor

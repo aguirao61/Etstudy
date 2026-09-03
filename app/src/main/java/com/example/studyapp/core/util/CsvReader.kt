@@ -105,19 +105,19 @@ class CsvReader(private val context: Context) {
 
     private fun <T> readFromAssets(fileName: String, mapper: (Map<String, String>) -> T): List<T> {
         return try {
-            val inputStream = context.assets.open(fileName)
-            val reader = BufferedReader(InputStreamReader(inputStream))
-            val headerLine = reader.readLine() ?: return emptyList()
-            val header = headerLine.split(",").map { it.trim().removePrefix("\uFEFF") }
-            
-            reader.lineSequence()
-                .filter { it.isNotBlank() }
-                .map { line ->
-                    val values = parseCsvLine(line)
-                    header.zip(values).toMap()
-                }
-                .map(mapper)
-                .toList()
+            context.assets.open(fileName).bufferedReader().use { reader ->
+                val headerLine = reader.readLine() ?: return emptyList()
+                val header = headerLine.split(",").map { it.trim().removePrefix("\uFEFF") }
+
+                reader.lineSequence()
+                    .filter { it.isNotBlank() }
+                    .map { line ->
+                        val values = parseCsvLine(line)
+                        header.zip(values).toMap()
+                    }
+                    .map(mapper)
+                    .toList()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

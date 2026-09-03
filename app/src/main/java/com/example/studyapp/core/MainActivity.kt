@@ -3,6 +3,8 @@ package com.example.studyapp.core
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +19,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -38,6 +42,16 @@ import com.example.studyapp.questions.presentation.subject_screen.SubjectsViewMo
 import com.example.studyapp.questions.presentation.quiz_config_screen.QuizConfigScreen
 import com.example.studyapp.questions.presentation.quiz_config_screen.QuizConfigViewModel
 import com.example.studyapp.user_profile.domain.models.ThemeMode
+import com.example.studyapp.user_profile.presentation.screens.community_screen.CommunityScreen
+import com.example.studyapp.user_profile.presentation.screens.community_screen.CommunityViewModel
+import com.example.studyapp.user_profile.presentation.screens.profile_screen.ProfileScreen
+import com.example.studyapp.user_profile.presentation.screens.profile_screen.ProfileViewModel
+import com.example.studyapp.user_profile.presentation.screens.settings_screen.SettingsScreen
+import com.example.studyapp.user_profile.presentation.screens.settings_screen.SettingsViewModel
+import com.example.studyapp.user_profile.presentation.screens.inventory_screen.InventoryScreen
+import com.example.studyapp.user_profile.presentation.screens.inventory_screen.InventoryViewModel
+import com.example.studyapp.user_profile.presentation.screens.banner_screen.BannersScreen
+import com.example.studyapp.user_profile.presentation.screens.banner_screen.BannersViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,14 +60,24 @@ class MainActivity : ComponentActivity() {
             val appModule = (LocalContext.current.applicationContext as App).appModule
             val navController = rememberNavController()
 
-            // Función de navegación segura para los botones de volver de la UI
+            // Safe navigation function for returning to previous screen
             val safePopBackStack = {
                 val currentEntry = navController.currentBackStackEntry
                 val previousEntry = navController.previousBackStackEntry
-                // Solo hacemos pop si la pantalla actual está activa y hay una pantalla a la que volver
-                // Esto evita que clics rápidos cierren la pantalla principal (Home)
                 if (currentEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED && previousEntry != null) {
                     navController.popBackStack()
+                }
+            }
+
+            // Safe navigation function for navigating to a new screen
+            val safeNavigate: (String, (NavOptionsBuilder.() -> Unit)?) -> Unit = { route, builder ->
+                val currentEntry = navController.currentBackStackEntry
+                if (currentEntry?.lifecycle?.currentState == Lifecycle.State.RESUMED) {
+                    if (builder != null) {
+                        navController.navigate(route, builder)
+                    } else {
+                        navController.navigate(route)
+                    }
                 }
             }
 
@@ -75,7 +99,15 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavHost(navController = navController, startDestination = "auth") {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "auth",
+                        // No animated transitions between screens
+                        enterTransition = { EnterTransition.None },
+                        exitTransition = { ExitTransition.None },
+                        popEnterTransition = { EnterTransition.None },
+                        popExitTransition = { ExitTransition.None }
+                        ) {
                         composable("auth") {
                             val authViewModel: AuthViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
@@ -88,7 +120,7 @@ class MainActivity : ComponentActivity() {
                             AuthScreen(
                                 viewModel = authViewModel,
                                 onNavigateToHome = { id ->
-                                    navController.navigate("home/$id") {
+                                    safeNavigate("home/$id") {
                                         popUpTo("auth") { inclusive = true }
                                     }
                                 }
@@ -106,23 +138,27 @@ class MainActivity : ComponentActivity() {
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return HomeViewModel(appModule.userRepository, savedStateHandle) as T
+                                        return HomeViewModel(
+                                            appModule.userRepository,
+                                            appModule.dailyMissionRepository,
+                                            savedStateHandle
+                                        ) as T
                                     }
                                 }
                             )
                             StudyHomeScreen(
                                 viewModel = homeViewModel,
                                 onNavigateToStudy = { flow ->
-                                    navController.navigate("study/$currentUserId/${flow.name}")
+                                    safeNavigate("study/$currentUserId/${flow.name}", null)
                                 },
                                 onNavigateToProfile = {
-                                    navController.navigate("profile/$currentUserId")
+                                    safeNavigate("profile/$currentUserId", null)
                                 },
                                 onNavigateToCommunity = {
-                                    navController.navigate("community/$currentUserId")
+                                    safeNavigate("community/$currentUserId", null)
                                 },
                                 onNavigateToSettings = {
-                                    navController.navigate("settings/$currentUserId")
+                                    safeNavigate("settings/$currentUserId", null)
                                 }
                             )
                         }
@@ -132,20 +168,20 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.IntType })
                         ) { backStackEntry ->
                             val currentUserId = backStackEntry.arguments?.getInt("userId") ?: 0
-                            val communityViewModel: com.example.studyapp.user_profile.presentation.screens.community_screen.CommunityViewModel = viewModel(
+                            val communityViewModel: CommunityViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.community_screen.CommunityViewModel(
+                                        return CommunityViewModel(
                                             appModule.userRepository,
                                             savedStateHandle
                                         ) as T
                                     }
                                 }
                             )
-                            _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.community_screen.CommunityScreen(
+                            CommunityScreen(
                                 viewModel = communityViewModel,
                                 onBackClick = { safePopBackStack() }
                             )
@@ -187,10 +223,10 @@ class MainActivity : ComponentActivity() {
                                     viewModel = subjectsViewModel,
                                     onNavigateBack = { safePopBackStack() },
                                     onNavigateToQuizConfig = { id, name ->
-                                        navController.navigate("quiz_config/$id/$name")
+                                        safeNavigate("quiz_config/$id/$name", null)
                                     },
                                     onNavigateToProfile = {
-                                        navController.navigate("profile/$currentUserId")
+                                        safeNavigate("profile/$currentUserId", null)
                                     }
                                 )
                             }
@@ -227,20 +263,21 @@ class MainActivity : ComponentActivity() {
                                     flowType = flowType,
                                     viewModel = quizConfigViewModel,
                                     onBackClick = { safePopBackStack() },
-                                    onStartTest = { sId, mId, count, random, _, immediate, flow ->
-                                        navController.navigate("quiz_play/$sId/$mId/$count/$immediate/$random/$flow")
+                                    onStartTest = { sId, mId, count, random, timer, immediate, flow ->
+                                        safeNavigate("quiz_play/$sId/$mId/$count/$immediate/$random/$timer/$flow", null)
                                     }
                                 )
                             }
                             
                             composable(
-                                route = "quiz_play/{subjectId}/{moduleId}/{count}/{immediate}/{isRandom}/{flowType}",
+                                route = "quiz_play/{subjectId}/{moduleId}/{count}/{immediate}/{isRandom}/{timerEnabled}/{flowType}",
                                 arguments = listOf(
                                     navArgument("subjectId") { type = NavType.IntType },
                                     navArgument("moduleId") { type = NavType.IntType },
                                     navArgument("count") { type = NavType.IntType },
                                     navArgument("immediate") { type = NavType.BoolType },
                                     navArgument("isRandom") { type = NavType.BoolType },
+                                    navArgument("timerEnabled") { type = NavType.BoolType },
                                     navArgument("flowType") { type = NavType.StringType }
                                 )
                             ) { entry ->
@@ -267,8 +304,8 @@ class MainActivity : ComponentActivity() {
                                     viewModel = quizPlayViewModel,
                                     onBackClick = { safePopBackStack() },
                                     onNavigateToResults = { attempt ->
-                                        navController.navigate("quiz_results/$currentUserId") {
-                                            popUpTo("quiz_play/{subjectId}/{moduleId}/{count}/{immediate}/{isRandom}/{flowType}") {
+                                        safeNavigate("quiz_results/$currentUserId") {
+                                            popUpTo("quiz_play/{subjectId}/{moduleId}/{count}/{immediate}/{isRandom}/{timerEnabled}/{flowType}") {
                                                 inclusive = true
                                             }
                                         }
@@ -276,7 +313,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                             }
-                            
+                         
                             composable(
                                 route = "quiz_results/{userId}",
                                 arguments = listOf(navArgument("userId") { type = NavType.IntType })
@@ -304,7 +341,7 @@ class MainActivity : ComponentActivity() {
                                     viewModel = quizResultsViewModel,
                                     onBackToConfigClick = { safePopBackStack() },
                                     onNavigateToHome = {
-                                        navController.navigate("home/$currentUserId") {
+                                        safeNavigate("home/$currentUserId") {
                                             popUpTo("home/$currentUserId") { inclusive = true }
                                         }
                                     }
@@ -317,13 +354,13 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.IntType })
                         ) { backStackEntry ->
                             val currentUserId = backStackEntry.arguments?.getInt("userId") ?: 0
-                            val profileViewModel: com.example.studyapp.user_profile.presentation.screens.profile_screen.ProfileViewModel = viewModel(
+                            val profileViewModel: ProfileViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.profile_screen.ProfileViewModel(
+                                        return ProfileViewModel(
                                             appModule.userRepository,
                                             appModule.iconRepository,
                                             savedStateHandle
@@ -331,17 +368,17 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-                            _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.profile_screen.ProfileScreen(
+                            ProfileScreen(
                                 viewModel = profileViewModel,
                                 onBackClick = { safePopBackStack() },
                                 onNavigateToInventory = {
-                                    navController.navigate("inventory/$currentUserId")
+                                    safeNavigate("inventory/$currentUserId", null)
                                 },
                                 onNavigateToBanners = {
-                                    navController.navigate("banners/$currentUserId")
+                                    safeNavigate("banners/$currentUserId", null)
                                 },
                                 onNavigateToSettings = {
-                                    navController.navigate("settings/$currentUserId")
+                                    safeNavigate("settings/$currentUserId", null)
                                 }
                             )
                         }
@@ -351,24 +388,24 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.IntType })
                         ) { entry ->
                             val currentUserId = entry.arguments?.getInt("userId") ?: 0
-                            val settingsViewModel: com.example.studyapp.user_profile.presentation.screens.settings_screen.SettingsViewModel = viewModel(
+                            val settingsViewModel: SettingsViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.settings_screen.SettingsViewModel(
+                                        return SettingsViewModel(
                                             appModule.userRepository,
                                             savedStateHandle
                                         ) as T
                                     }
                                 }
                             )
-                            _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.settings_screen.SettingsScreen(
+                            SettingsScreen(
                                 viewModel = settingsViewModel,
                                 onBackClick = { safePopBackStack() },
                                 onLogoutClick = {
-                                    navController.navigate("auth") {
+                                    safeNavigate("auth") {
                                         popUpTo(0) { inclusive = true }
                                     }
                                 }
@@ -380,13 +417,13 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.IntType })
                         ) { entry ->
                             val currentUserId = entry.arguments?.getInt("userId") ?: 0
-                            val inventoryViewModel: com.example.studyapp.user_profile.presentation.screens.inventory_screen.InventoryViewModel = viewModel(
+                            val inventoryViewModel: InventoryViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.inventory_screen.InventoryViewModel(
+                                        return InventoryViewModel(
                                             appModule.iconRepository,
                                             appModule.userRepository,
                                             savedStateHandle
@@ -394,7 +431,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-                            _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.inventory_screen.InventoryScreen(
+                            InventoryScreen(
                                 viewModel = inventoryViewModel,
                                 onBackClick = { safePopBackStack() }
                             )
@@ -405,13 +442,13 @@ class MainActivity : ComponentActivity() {
                             arguments = listOf(navArgument("userId") { type = NavType.IntType })
                         ) { backStackEntry ->
                             val currentUserId = backStackEntry.arguments?.getInt("userId") ?: 0
-                            val bannersViewModel: com.example.studyapp.user_profile.presentation.screens.banner_screen.BannersViewModel = viewModel(
+                            val bannersViewModel: BannersViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
                                     override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
-                                        return _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.banner_screen.BannersViewModel(
+                                        return BannersViewModel(
                                             appModule.bannerRepository,
                                             appModule.userRepository,
                                             savedStateHandle
@@ -419,7 +456,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             )
-                            _root_ide_package_.com.example.studyapp.user_profile.presentation.screens.banner_screen.BannersScreen(
+                            BannersScreen(
                                 viewModel = bannersViewModel,
                                 onBackClick = { safePopBackStack() }
                             )

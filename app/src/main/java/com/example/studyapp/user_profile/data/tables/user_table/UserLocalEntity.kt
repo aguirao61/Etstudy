@@ -41,6 +41,9 @@ data class UserLocalEntity(
     val correctAnswers: Int,
     val completedTests: Int,
     val completedCourses: Int,
+    val currentStreak: Int = 0,
+    val maxStreak: Int = 0,
+    val lastStreakUpdate: Long = 0,
     // Tipos nullable (Int?) para poder inicializar la cuenta sin ningún cosmético equipado
     val equippedIconId: Int? = null,
     val equippedBannerId: Int? = null,

@@ -15,7 +15,7 @@ class App: Application() {
         super.onCreate()
         appModule = AppModuleImpl(this)
 
-        // Inicializar datos desde CSV cada vez que arranca la app
+        // Initialize data in a background thread at start of app
         CoroutineScope(Dispatchers.IO).launch {
             val initializer = DatabaseInitializer(this@App, appModule.database)
             initializer.initializeData()

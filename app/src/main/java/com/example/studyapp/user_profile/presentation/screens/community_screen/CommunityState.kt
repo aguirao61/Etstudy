@@ -3,7 +3,7 @@ package com.example.studyapp.user_profile.presentation.screens.community_screen
 import com.example.studyapp.user_profile.domain.models.User
 
 enum class LeaderboardType {
-    LEVEL, STUDY_POINTS
+    LEVEL, STUDY_POINTS, STREAK
 }
 
 data class CommunityState(
@@ -16,5 +16,6 @@ data class CommunityState(
         get() = when (leaderboardType) {
             LeaderboardType.LEVEL -> users.sortedWith(compareByDescending<User> { it.level }.thenByDescending { it.experience })
             LeaderboardType.STUDY_POINTS -> users.sortedByDescending { it.studyPoints }
+            LeaderboardType.STREAK -> users.sortedByDescending { it.currentStreak }
         }
 }

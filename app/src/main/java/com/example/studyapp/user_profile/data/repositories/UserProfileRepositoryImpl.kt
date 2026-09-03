@@ -12,6 +12,7 @@ import com.example.studyapp.user_profile.domain.repositories.UserRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
 class UserProfileRepositoryImpl(
     private val userDao: UserProfileDao,
@@ -96,5 +97,32 @@ class UserProfileRepositoryImpl(
 
     override suspend fun deleteUser(userId: Int) {
         userDao.deleteUserById(userId)
+    }
+
+    override suspend fun checkAndResetStreak(userId: Int) {
+        val user = getUserById(userId) ?: return
+        if (user.lastStreakUpdate == 0L) return
+
+        val currentTime = System.currentTimeMillis()
+        if (currentTime < user.lastStreakUpdate) return
+
+        val lastCalendar = Calendar.getInstance().apply { timeInMillis = user.lastStreakUpdate }
+        val currentCalendar = Calendar.getInstance().apply { timeInMillis = currentTime }
+
+        val isSameDay = lastCalendar.get(Calendar.YEAR) == currentCalendar.get(Calendar.YEAR) &&
+                lastCalendar.get(Calendar.DAY_OF_YEAR) == currentCalendar.get(Calendar.DAY_OF_YEAR)
+
+        if (isSameDay) return
+
+        val yesterdayCalendar = Calendar.getInstance().apply {
+            timeInMillis = currentTime
+            add(Calendar.DAY_OF_YEAR, -1)
+        }
+        val wasYesterday = lastCalendar.get(Calendar.YEAR) == yesterdayCalendar.get(Calendar.YEAR) &&
+                lastCalendar.get(Calendar.DAY_OF_YEAR) == yesterdayCalendar.get(Calendar.DAY_OF_YEAR)
+
+        if (!wasYesterday) {
+            updateUser(user.copy(currentStreak = 0))
+        }
     }
 }
