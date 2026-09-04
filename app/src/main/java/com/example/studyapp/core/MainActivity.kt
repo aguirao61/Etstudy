@@ -18,6 +18,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
@@ -135,7 +136,7 @@ class MainActivity : ComponentActivity() {
                             val homeViewModel: HomeViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return HomeViewModel(
@@ -171,7 +172,7 @@ class MainActivity : ComponentActivity() {
                             val communityViewModel: CommunityViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return CommunityViewModel(
@@ -205,7 +206,7 @@ class MainActivity : ComponentActivity() {
                                 val subjectsViewModel: SubjectsViewModel = viewModel(
                                     factory = object : ViewModelProvider.Factory {
                                         @Suppress("UNCHECKED_CAST")
-                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                             val savedStateHandle = extras.createSavedStateHandle()
                                             savedStateHandle["userId"] = currentUserId
                                             savedStateHandle["flowType"] = flowType
@@ -247,7 +248,7 @@ class MainActivity : ComponentActivity() {
                                 val quizConfigViewModel: QuizConfigViewModel = viewModel(
                                     factory = object : ViewModelProvider.Factory {
                                         @Suppress("UNCHECKED_CAST")
-                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                             val savedStateHandle = extras.createSavedStateHandle()
                                             savedStateHandle["userId"] = currentUserId
                                             savedStateHandle["flowType"] = flowType
@@ -289,7 +290,7 @@ class MainActivity : ComponentActivity() {
                                 val quizPlayViewModel: QuizPlayViewModel = viewModel(
                                     factory = object : ViewModelProvider.Factory {
                                         @Suppress("UNCHECKED_CAST")
-                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                             val savedStateHandle = extras.createSavedStateHandle()
                                             savedStateHandle["userId"] = currentUserId
                                             return QuizPlayViewModel(
@@ -323,7 +324,7 @@ class MainActivity : ComponentActivity() {
                                 val quizResultsViewModel: QuizResultsViewModel = viewModel(
                                     factory = object : ViewModelProvider.Factory {
                                         @Suppress("UNCHECKED_CAST")
-                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                             val savedStateHandle = extras.createSavedStateHandle()
                                             val attempt = entry.savedStateHandle.get<Attempt>("attempt")
                                             savedStateHandle["attempt"] = attempt
@@ -357,7 +358,7 @@ class MainActivity : ComponentActivity() {
                             val profileViewModel: ProfileViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return ProfileViewModel(
@@ -391,7 +392,7 @@ class MainActivity : ComponentActivity() {
                             val settingsViewModel: SettingsViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return SettingsViewModel(
@@ -420,7 +421,7 @@ class MainActivity : ComponentActivity() {
                             val inventoryViewModel: InventoryViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return InventoryViewModel(
@@ -445,7 +446,7 @@ class MainActivity : ComponentActivity() {
                             val bannersViewModel: BannersViewModel = viewModel(
                                 factory = object : ViewModelProvider.Factory {
                                     @Suppress("UNCHECKED_CAST")
-                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: androidx.lifecycle.viewmodel.CreationExtras): T {
+                                    override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
                                         val savedStateHandle = extras.createSavedStateHandle()
                                         savedStateHandle["userId"] = currentUserId
                                         return BannersViewModel(
