@@ -39,6 +39,7 @@ data class UserBannerLocalEntity(
     @PrimaryKey(autoGenerate = true) val userBannerId: Int = 0,
     val isBannerObtained: Boolean = false,
 
+    // Foreign Keys
     val uniqueUserId: Int,
     val uniqueBannerId: Int,
     val uniqueCourseId: Int? = null

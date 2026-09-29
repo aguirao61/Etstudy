@@ -1,5 +1,7 @@
 package com.example.studyapp.user_profile.presentation.screens.community_screen
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -259,7 +261,7 @@ fun LeaderboardItem(
         colors = CardDefaults.cardColors(
             containerColor = if (isCurrentUser) PrimaryBlue.copy(alpha = 0.1f) else StudyTheme.cardBg
         ),
-        border = androidx.compose.foundation.BorderStroke(
+        border = BorderStroke(
             width = if (isCurrentUser) 2.dp else if (isTop3) 2.dp else 1.dp,
             color = if (isCurrentUser) PrimaryBlue else if (isTop3) rankColor else StudyTheme.cardBorder
         )
@@ -308,10 +310,10 @@ fun LeaderboardItem(
                         val id = context.resources.getIdentifier(user.equippedIconUrl, "drawable", context.packageName)
                         if (id != 0) id else R.drawable.img
                     }
-                    androidx.compose.foundation.Image(
+                    Image(
                         painter = painterResource(id = resId),
                         contentDescription = null,
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {

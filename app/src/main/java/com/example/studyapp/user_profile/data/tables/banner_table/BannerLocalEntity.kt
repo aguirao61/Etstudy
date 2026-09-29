@@ -26,5 +26,7 @@ data class BannerLocalEntity(
     val bannerIcon: String = "",
     val bannerSubject: String = "",
     val bannerPoints: Int = 0,
+
+    // Claves Foráneas
     val uniqueCourseId: Int? = null
 )

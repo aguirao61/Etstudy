@@ -194,14 +194,14 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
                     text = "TESTS",
                     icon = Icons.Default.Assignment,
                     brush = Brush.verticalGradient(colors = listOf(MutedGreen, MutedGreenDark)), // Verde suave
-                    onClick = { onOptionClick("Tests") }
+                    onClick = { onOptionClick("Test") }
                 )
 
                 CustomStartButton(
                     text = "TESTS DE FALLOS",
                     icon = Icons.Default.Warning,
                     brush = Brush.verticalGradient(colors = listOf(MutedRed, MutedRedDark)), // Rojo suave
-                    onClick = { onOptionClick("Tests de fallos") }
+                    onClick = { onOptionClick("Test de fallos") }
                 )
                 
                 TextButton(onClick = onDismiss, modifier = Modifier.padding(top = 8.dp)) {
