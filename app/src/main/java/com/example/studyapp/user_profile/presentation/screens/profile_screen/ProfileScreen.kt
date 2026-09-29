@@ -4,7 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -357,7 +357,7 @@ fun ProfileScreen(
                                     color = PrimaryBlue
                                 )
                             }
-                            val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+                            val bonusBg = if (LocalDarkTheme.current) Color(0xFF423D33) else Color(0xFFFEF3C7)
                             Surface(
                                 color = bonusBg,
                                 shape = CircleShape

@@ -4,7 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -243,7 +243,7 @@ fun QuizResultsScreen(
 
 @Composable
 fun LevelUpPopup(level: Int) {
-    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+    val bonusBg = if (LocalDarkTheme.current) Color(0xFF423D33) else Color(0xFFFEF3C7)
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),
@@ -281,7 +281,7 @@ fun LevelUpPopup(level: Int) {
 
 @Composable
 fun MilestonePopup() {
-    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+    val bonusBg = if (LocalDarkTheme.current) Color(0xFF423D33) else Color(0xFFFEF3C7)
     Surface(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         shape = RoundedCornerShape(24.dp),

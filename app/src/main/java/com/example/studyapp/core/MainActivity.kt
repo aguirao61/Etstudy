@@ -81,9 +81,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Observe the current user's theme mode
+            // Observe the current user's theme mode across back stack entries
             val navBackStackEntry by navController.currentBackStackEntryFlow.collectAsState(initial = null)
-            val userId = navBackStackEntry?.arguments?.getInt("userId") ?: 0
+            val userId = remember(navBackStackEntry) {
+                var id = navBackStackEntry?.arguments?.getInt("userId") ?: 0
+                if (id == 0) {
+                    try {
+                        val parentEntry = navController.getBackStackEntry("study/{userId}/{flowType}")
+                        id = parentEntry.arguments?.getInt("userId") ?: 0
+                    } catch (_: Exception) {}
+                }
+                id
+            }
             
             val userState by appModule.userRepository.getUserFlow(userId).collectAsState(initial = null)
             val themeMode = userState?.selectedTheme ?: ThemeMode.SYSTEM

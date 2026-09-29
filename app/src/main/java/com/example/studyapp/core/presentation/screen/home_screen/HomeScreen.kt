@@ -3,7 +3,7 @@ package com.example.studyapp.core.presentation.screen.home_screen
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -191,17 +191,17 @@ fun StartTestDialog(onDismiss: () -> Unit, onOptionClick: (String) -> Unit) {
                 )
 
                 CustomStartButton(
-                    text = "TESTS",
+                    text = "TEST",
                     icon = Icons.Default.Assignment,
                     brush = Brush.verticalGradient(colors = listOf(MutedGreen, MutedGreenDark)), // Verde suave
-                    onClick = { onOptionClick("Test") }
+                    onClick = { onOptionClick("Tests") }
                 )
 
                 CustomStartButton(
-                    text = "TESTS DE FALLOS",
+                    text = "TEST DE FALLOS",
                     icon = Icons.Default.Warning,
                     brush = Brush.verticalGradient(colors = listOf(MutedRed, MutedRedDark)), // Rojo suave
-                    onClick = { onOptionClick("Test de fallos") }
+                    onClick = { onOptionClick("Tests de fallos") }
                 )
                 
                 TextButton(onClick = onDismiss, modifier = Modifier.padding(top = 8.dp)) {
@@ -389,7 +389,7 @@ fun ChallengeItem(
     isClaimed: Boolean,
     isBonus: Boolean = false
 ) {
-    val bonusBg = if (isSystemInDarkTheme()) Color(0xFF423D33) else Color(0xFFFEF3C7)
+    val bonusBg = if (LocalDarkTheme.current) Color(0xFF423D33) else Color(0xFFFEF3C7)
     
     Column(
         modifier = Modifier
